@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>الخصومات الذكية للمواقف</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(#1a1a1a, #000);
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: #f0f0f0;
+      overflow-x: hidden;
+    }
+    .header-toggle {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background-color: #ffc107;
+      color: #222;
+      padding: 10px 14px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 1001;
+    }
+    .sidebar {
+      position: fixed;
+      top: 0;
+      right: -250px;
+      width: 250px;
+      height: 100%;
+      background-color: #111;
+      padding: 20px;
+      transition: right 0.3s ease;
+      z-index: 1000;
+      box-shadow: -2px 0 8px rgba(0,0,0,0.5);
+    }
+    .sidebar.active {
+      right: 0;
+    }
+    .sidebar h2 {
+      color: #ffc107;
+      margin-bottom: 20px;
+    }
+    .sidebar a {
+      display: block;
+      color: #f0f0f0;
+      text-decoration: none;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+    .container {
+      padding: 60px 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+    h1 {
+      color: #ffc107;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .section {
+      background-color: #222;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      box-shadow: 0 0 8px rgba(255,255,255,0.05);
+    }
+    input[type="text"], input[type="datetime-local"] {
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #888;
+      background-color: #1a1a1a;
+      color: #fff;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    button {
+      background-color: #ffc107;
+      color: #222;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #ffca28;
+    }
+    .status {
+      margin-top: 10px;
+      color: #80cbc4;
+      font-weight: bold;
+      font-size: 15px;
+    }
+    #rewardNotice {
+      display: none;
+      background-color: #333;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      border: 1px solid #555;
+    }
+    #voiceButton {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background-color: #ffc107;
+      color: #222;
+      padding: 12px 16px;
+      border-radius: 50px;
+      font-size: 16px;
+      cursor: pointer;
+      z-index: 1002;
+      box-shadow: 0 0 8px rgba(0,0,0,0.3);
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+      color: #aaa;
+      border-top: 1px solid #444;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-toggle" onclick="toggleSidebar()">☰</div>
+
+  <div class="sidebar" id="sidebar">
+    <h2>🚦 التنقل</h2>
+    <a href="../index.html">🏠 الرئيسية</a>
+    <a href="drone_interface.html">🚁 واجهة الدرون</a>
+    <a href="parking_rewards.html">🅿️ الخصومات الذكية</a>
+    <a href="voice_ai.html">🗣️ الأوامر الصوتية</a>
+    <a href="traffic_dashboard.html">📊 لوحة المرور</a>
+  </div>
+
+  <div class="container">
+    <h1>🅿️ الخصومات الذكية للمواقف</h1>
+
+    <div class="section">
+      <h2>🔢 أدخل رقم اللوحة أو اسم المستخدم</h2>
+      <input type="text" id="userInput" placeholder="مثال: KH-2025 أو ali.kh">
+      <button onclick="applyDiscount()">طلب الخصم</button>
+      <div class="status" id="discountStatus"></div>
+    </div>
+
+    <div class="section">
+      <h2>📆 حجز مسبق للموقف</h2>
+      <input type="datetime-local" id="bookingTime">
+      <button onclick="reserveSpot()">تأكيد الحجز</button>
+      <div class="status" id="bookingStatus"></div>
+    </div>
+
+    <div id="rewardNotice">
+      <h2>💰 تم إضافة رصيد مجاني!</h2>
+      <p>تم منحك رصيد رمزي بسبب نشاطك الحضري.</p>
+      <audio id="coinSound" src="../assets/coin.mp3" preload="auto"></audio>
+    </div>
+  </div>
+
+  <div id="voiceButton" onclick="startRecording()">🎙️ تسجيل صوتي</div>
+
+  <footer>
+    المدينة الرمزية الذكية © Solvanix – جميع الحقوق محفوظة
+  </footer>
+
+  <script>
+    function toggleSidebar() {
+      document.getElementById("sidebar").classList.toggle("active");
+    }
+
+    function applyDiscount() {
+      const input = document.getElementById("userInput").value;
+      const status = document.getElementById("discountStatus");
+      if (input.trim() !== "") {
+        status.innerText = `✅ تم تفعيل الخصم لـ "${input}"`;
+        showRewardNotice();
+      } else {
+        status.innerText = "⚠️ الرجاء إدخال رقم اللوحة أو اسم المستخدم.";
+      }
+    }
+
+    function reserveSpot() {
+      const time = document.getElementById("bookingTime").value;
+      const status = document.getElementById("bookingStatus");
+      if (time) {
+        status.innerText = `📆 تم حجز الموقف في ${new Date(time).toLocaleString("ar-EG")}`;
+        showRewardNotice();
+      } else {
+        status.innerText = "⚠️ الرجاء اختيار وقت الحجز.";
+      }
+    }
+
+    function showRewardNotice() {
+      const notice = document.getElementById("rewardNotice");
+      const sound = document.getElementById("coinSound");
+      notice.style.display = "block";
+      sound.play();
+    }
+
+    function startRecording() {
+      alert("🎙️ جاري تسجيل الصوت... (واجهة رمزية)");
+    }
+  </script>
+
+</body>
+</html>
