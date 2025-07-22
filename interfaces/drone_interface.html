@@ -2,113 +2,189 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>واجهة تشغيل الدرون الذكي – تجربة المستخدم</title>
+  <title>المدينة الرمزية الذكية – الرئيسية</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       margin: 0;
       background: linear-gradient(#2c2c2c, #1a1a1a);
       font-family: "Segoe UI", Tahoma, sans-serif;
       color: #f0f0f0;
+      overflow-x: hidden;
     }
-    .container {
-      max-width: 1000px;
-      margin: auto;
-      padding: 40px 20px;
-    }
-    .section {
-      background-color: rgba(0,0,0,0.75);
-      padding: 30px;
-      border-radius: 12px;
-      margin-bottom: 30px;
-      box-shadow: 0 0 12px rgba(255,255,255,0.05);
-      border: 2px dashed #ffc107;
-    }
-    h1, h2 {
-      color: #ffc107;
-      border-bottom: 1px solid #555;
-      padding-bottom: 5px;
-      margin-bottom: 15px;
-    }
-    p, li {
-      line-height: 1.8;
-      color: #ddd;
-    }
-    ul {
-      padding-right: 20px;
-    }
-    button {
+    .header-toggle {
+      position: fixed;
+      top: 15px;
+      right: 15px;
       background-color: #ffc107;
       color: #222;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
+      padding: 10px 14px;
+      border-radius: 50%;
+      font-size: 20px;
       cursor: pointer;
-      margin-top: 10px;
+      z-index: 1001;
     }
-    button:hover {
-      background-color: #ffca28;
+    .sidebar {
+      position: fixed;
+      top: 0;
+      right: -250px;
+      width: 250px;
+      height: 100%;
+      background-color: #111;
+      padding: 20px;
+      transition: right 0.3s ease;
+      z-index: 1000;
+      box-shadow: -2px 0 8px rgba(0,0,0,0.5);
     }
-    .input-box {
-      margin-top: 15px;
+    .sidebar.active {
+      right: 0;
     }
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #888;
-      background-color: #1a1a1a;
-      color: #fff;
+    .sidebar h2 {
+      color: #ffc107;
+      margin-bottom: 20px;
     }
-    .note {
+    .sidebar a {
+      display: block;
+      color: #f0f0f0;
+      text-decoration: none;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+    .container {
+      padding: 60px 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1 {
+      color: #ffc107;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .link-box {
       background-color: #333;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 8px rgba(255,255,255,0.05);
+    }
+    .link-box a {
+      color: #80cbc4;
+      font-size: 18px;
+      text-decoration: none;
+    }
+    .drone-status {
+      background-color: #444;
       padding: 15px;
       border-radius: 8px;
-      margin-top: 20px;
-      border: 1px solid #666;
+      margin-bottom: 20px;
+      font-size: 16px;
+      color: #ffc107;
+    }
+    video {
+      width: 100%;
+      height: 280px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      background-color: #000;
+    }
+    .gallery {
+      display: flex;
+      overflow-x: auto;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    .gallery-item {
+      background-color: #222;
+      border-radius: 6px;
+      padding: 10px;
+      min-width: 160px;
+      color: #ccc;
       font-size: 14px;
-      color: #bbb;
+      border: 1px solid #555;
+    }
+    .gallery-item img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+      color: #aaa;
+      border-top: 1px solid #444;
+      margin-top: 40px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
 
-    <div class="section">
-      <h1>🚁 واجهة تشغيل الدرون الذكي</h1>
-      <p>هذه الصفحة تمثل النموذج التشغيلي للدرون الرمزي داخل التطبيق. تُستخدم في الخلفية لتوجيه السائقين، تقديم خصومات، والتفاعل الصوتي. وهي مصممة لتكون مرجعًا وظيفيًا للفريق الفني.</p>
-    </div>
+  <div class="header-toggle" onclick="toggleSidebar()">☰</div>
 
-    <div class="section">
-      <h2>📍 تحديد الموقع بين السائق والدرون</h2>
-      <p>عند دخول السائق شارعًا غير مزدحم، يتم تأكيد موقعه تلقائيًا عبر GPS. إذا تواجد فيه الدرون، يُعرض خيار طلب خصم ذكي على وقوف مؤجل.</p>
-      <button>طلب خصم على وقوف مؤجل</button>
-      <div class="note">📌 ملاحظة: يُسجل هذا التفاعل في قاعدة البيانات لتقييم السلوك المروري وتقديم الحوافز لاحقًا.</div>
-    </div>
-
-    <div class="section">
-      <h2>📡 بث مباشر أو صورة من الدرون</h2>
-      <p>يمكن للمستخدم طلب بث حي أو صورة من زاوية معينة في الشارع، لتقييم الوضع المروري أو السياحي.</p>
-      <div class="input-box">
-        <input type="text" placeholder="اكتب اسم الشارع أو الزاوية المطلوبة">
-      </div>
-      <button>طلب صورة</button>
-      <button>طلب بث مباشر</button>
-      <div class="note">📌 ملاحظة: يتم تقييم الطلب عبر نموذج AI لتحديد الأولوية، ثم يُنفذ فورًا أو يُؤجل حسب السياق.</div>
-    </div>
-
-    <div class="section">
-      <h2>🗣️ التفاعل الصوتي وتحليل اللهجة</h2>
-      <p>يمكن للمستخدم التحدث إلى النظام، وسيتم تحليل كلامه ولهجته لتقديم رد مخصص. النموذج يتطور تدريجيًا حسب نمط الاستخدام.</p>
-      <button>🎙️ تسجيل أمر صوتي</button>
-      <p style="margin-top:10px;">مثال: "وين في عداد فاضي؟" أو "هل في أزمة في شارع المدارس؟"</p>
-      <div class="note">📌 ملاحظة: يتم حفظ الأوامر الصوتية لتدريب النموذج وتحسين التخصيص الصوتي لكل مستخدم.</div>
-    </div>
-
-    <div class="section">
-      <h2>🧠 تكامل مع النموذج الذكي</h2>
-      <p>هذه الواجهة قابلة للربط مع نموذج ذكاء اصطناعي لتحليل النية، تخصيص الصوت، وتقديم توصيات مرورية ذكية. وهي تُستخدم أيضًا لجمع بيانات التفاعل وتحسين النظام تدريجيًا.</p>
-    </div>
-
+  <div class="sidebar" id="sidebar">
+    <h2>🚦 التنقل</h2>
+    <a href="index.html">🏠 الرئيسية</a>
+    <a href="drone_interface.html">🚁 واجهة الدرون</a>
+    <a href="parking_rewards.html">🅿️ الخصومات الذكية</a>
+    <a href="voice_ai.html">🗣️ الأوامر الصوتية</a>
+    <a href="traffic_dashboard.html">📊 لوحة المرور</a>
   </div>
+
+  <div class="container">
+    <h1>🌆 المدينة الرمزية الذكية</h1>
+    <p>اختر إحدى الواجهات أو تابع حالة الدرون النشطة حاليًا:</p>
+
+    <div class="drone-status">
+      الدرون النشطة الآن: <strong>درون التوجيه #A3</strong><br>
+      الموقع الحالي: <strong>شارع المدارس – رام الله</strong><br>
+      الحالة: <strong>نشطة – توجيه مروري مباشر</strong>
+    </div>
+
+    <video controls autoplay muted>
+      <source src="assets/live_sample.mp4" type="video/mp4">
+      متصفحك لا يدعم تشغيل الفيديو.
+    </video>
+
+    <div class="gallery">
+      <div class="gallery-item">
+        <img src="assets/drone_view_1.jpg" alt="صورة 1">
+        شارع المدارس<br>07:42 صباحًا – 22 يوليو
+      </div>
+      <div class="gallery-item">
+        <img src="assets/drone_view_2.jpg" alt="صورة 2">
+        تقاطع البلدية<br>07:45 صباحًا – 22 يوليو
+      </div>
+      <div class="gallery-item">
+        <img src="assets/drone_view_3.jpg" alt="صورة 3">
+        شارع القدس<br>07:50 صباحًا – 22 يوليو
+      </div>
+    </div>
+
+    <div class="link-box">
+      <a href="drone_interface.html">🚁 تشغيل الدرون الذكي</a>
+    </div>
+    <div class="link-box">
+      <a href="parking_rewards.html">🅿️ نظام الخصومات الذكية</a>
+    </div>
+    <div class="link-box">
+      <a href="voice_ai.html">🗣️ التفاعل الصوتي المخصص</a>
+    </div>
+    <div class="link-box">
+      <a href="traffic_dashboard.html">📊 لوحة المرور الذكية</a>
+    </div>
+  </div>
+
+  <footer>
+    المدينة الرمزية الذكية © Solvanix – جميع الحقوق محفوظة
+  </footer>
+
+  <script>
+    function toggleSidebar() {
+      document.getElementById("sidebar").classList.toggle("active");
+    }
+  </script>
+
 </body>
 </html>
