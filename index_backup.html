@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>المدينة الرمزية الحضرية | Urban Symbolic City</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Cairo', sans-serif;
+      background-color: #f0f4f8;
+      color: #333;
+      scroll-behavior: smooth;
+    }
+    header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background-color: #2c3e50;
+      color: white;
+      padding: 1rem 2rem;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    nav a {
+      color: white;
+      margin-left: 1rem;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .marquee {
+      background-color: #27ae60;
+      color: white;
+      padding: 0.5rem;
+      overflow: hidden;
+      white-space: nowrap;
+      box-shadow: inset 0 0 10px #00000033;
+      margin-top: 60px;
+    }
+    .marquee span {
+      display: inline-block;
+      animation: scroll 15s linear infinite;
+    }
+    @keyframes scroll {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    section {
+      padding: 6rem 2rem 2rem;
+      max-width: 1000px;
+      margin: auto;
+    }
+    h2 {
+      color: #2c3e50;
+      margin-top: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px #00000022;
+      padding: 1rem;
+      text-align: center;
+    }
+    .card img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+    }
+    .button {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      background-color: #2980b9;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+    }
+    footer {
+      background-color: #ecf0f1;
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.9rem;
+      color: #777;
+      margin-top: 60px;
+    }
+    footer a {
+      color: #2980b9;
+      text-decoration: none;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🌆 المدينة الرمزية الحضرية</h1>
+    <nav>
+      <a href="#apps">التطبيقات</a>
+      <a href="#ai">الذكاء الاصطناعي</a>
+      <a href="#guide">الدليل</a>
+      <a href="#repository">المستودع</a>
+      <a href="#contact">تواصل معنا</a>
+    </nav>
+  </header>
+
+  <div class="marquee">
+    <span>مرحبًا بكم في المدينة الرمزية الحضرية — أدوات ذكية وخضراء لخدمة المجتمع | Welcome to Urban Symbolic City — Smart & Green Tools for Civic Life</span>
+  </div>
+
+  <section id="apps">
+    <h2>📱 التطبيقات الرمزية</h2>
+    <div class="grid">
+      <div class="card">
+        <img src="assets/images/school_recommendation.png" alt="School Drop App" />
+        <h3>📌 توصية المدرسة الذكية</h3>
+        <p>نقطة الانطلاق في التوصية الرمزية بين المستخدم والمدرسة والنموذج الذكي.</p>
+        <a href="interfaces/symbolic_app/recommendation/build_core_recommendation.html" class="button">عرض التوصية</a>
+      </div>
+      <div class="card">
+        <img src="assets/images/parking_center.png" alt="Parking Center App" />
+        <h3>مركز الاصطفاف الرمزي</h3>
+        <p>تجربة حضرية تستدعي الدرونات وتكافئ التفاعل الذكي عبر نقاط رمزية.</p>
+        <a href="projects/symbolic_parking_center/index.html" class="button">عرض المشروع</a>
+      </div>
+      <div class="card">
+        <img src="assets/images/drone_interface.png" alt="Drone Interface" />
+        <h3>واجهة تشغيل الدرون الذكي</h3>
+        <p>تفاعل مباشر مع الدرون الحضري، طلب بث، صور، وأوامر صوتية.</p>
+        <a href="interfaces/drone_interface.html" class="button">تشغيل الواجهة</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="ai">
+    <h2>🧠 نماذج الذكاء الاصطناعي</h2>
+    <div class="grid">
+      <div class="card">
+        <img src="assets/images/ai_model.png" alt="AI Model" />
+        <h3>نموذج تحليل حضري</h3>
+        <p>تحليل سلوك السكان واقتراح حلول حضرية قابلة للتكيّف عبر النموذج الرمزي.</p>
+        <a href="ai_models/urban_ai.html" class="button">تشغيل النموذج</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="guide">
+    <h2>📘 الدليل الرمزي</h2>
+    <p>صفحات تفاعلية تربط التقنية بالحياة اليومية، موجهة للطلاب وأولياء الأمور.</p>
+    <a href="guide/index.html" class="button">استعراض الدليل</a>
+  </section>
+
+  <section id="repository">
+    <h2>🧬 المستودع البرمجي</h2>
+    <p>للاطلاع على الكود، النماذج، والواجهات الذكية يمكنك زيارة المستودع:</p>
+    <a href="https://github.com/Solvanix/urban_symbolic_city" class="button" target="_blank">الانتقال إلى GitHub</a>
+  </section>
+
+  <section id="contact">
+    <h2>📬 تواصل معنا</h2>
+    <p id="contact-email">
+      <strong><a href="mailto:eng.ali.khateb@gmail.com">eng.ali.khateb@gmail.com</a></strong>
+    </p>
+  </section>
+
+  <footer>
+    &copy; 2025 جميع الحقوق محفوظة | Urban Symbolic City  
+    <br />
+    🔗 <a href="https://github.com/Solvanix/urban_symbolic_city" target="_blank">زيارة المستودع على GitHub</a>
+  </footer>
+
+</body>
+</html>
