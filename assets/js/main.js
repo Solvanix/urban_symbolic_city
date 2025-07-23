@@ -1,6 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-
-  // 1. تحميل بيانات التواصل من contact.json
   fetch('assets/config/contact.json')
     .then(res => res.json())
     .then(data => {
@@ -16,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-  // 2. تحميل تعريف المدينة الرمزية من ramallah.json
   fetch('assets/config/entities/ramallah.json')
     .then(res => res.json())
     .then(data => {
@@ -34,7 +31,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-  // 3. تفعيل الوضع الموسمي (مثل نقلة السنو)
   fetch('assets/config/moves/seasonal.json')
     .then(res => res.json())
     .then(data => {
@@ -43,7 +39,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-  // 4. تفعيل النقلة الرمزية الحالية (للمستقبل)
   fetch('assets/config/moves/symbolic_moves.json')
     .then(res => res.json())
     .then(data => {
@@ -52,5 +47,4 @@ document.addEventListener("DOMContentLoaded", () => {
         moveLabel.textContent = `النقلة الرمزية الحالية: ${data.current_move}`;
       }
     });
-
 });
