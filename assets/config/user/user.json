@@ -1,0 +1,10 @@
+{
+  "user_id": "u001",
+  "role": "user",
+  "name": "علي",
+  "language": "ar",
+  "preferences": {
+    "recommendation_mode": "مدرسي",
+    "alert_level": "منخفض"
+  }
+}
