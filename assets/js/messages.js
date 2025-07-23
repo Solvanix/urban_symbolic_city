@@ -1,72 +1,58 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const messageList = document.getElementById("message-list");
-  const aiResponse = document.getElementById("ai-response");
-  const voiceButton = document.getElementById("ai-voice-button");
-
-  // قراءة السياق الرمزي من التخزين المحلي
-  const mode = localStorage.getItem("recommendation_mode") || "مدرسي";
-  const level = localStorage.getItem("alert_level") || "منخفض";
-
-  // تحميل الرسائل من ملف JSON
-  fetch('../../../assets/config/messages/messages.json')
-    .then(res => res.json())
-    .then(data => {
-      if (Array.isArray(data.messages)) {
-        messageList.innerHTML = '';
-
-        // ترتيب الرسائل حسب نمط التوصية
-        const sortedMessages = data.messages.sort((a, b) => {
-          if (mode === "طوارئ") return b.priority - a.priority;
-          if (mode === "مدرسي") return a.type === "school" ? -1 : 1;
-          if (mode === "صحي") return a.type === "health" ? -1 : 1;
-          if (mode === "حضري") return a.type === "urban" ? -1 : 1;
-          return 0;
-        });
-
-        sortedMessages.forEach((msg) => {
-          const div = document.createElement("div");
-          div.className = "message";
-          div.textContent = `📩 ${msg.content}`;
-          messageList.appendChild(div);
-        });
-      } else {
-        messageList.textContent = "لا توجد رسائل رمزية حالياً.";
-      }
-    })
-    .catch(() => {
-      messageList.textContent = "تعذر تحميل الرسائل الرمزية.";
-    });
-
-  // تفعيل القراءة الصوتية
-  voiceButton.addEventListener("click", () => {
-    const messages = document.querySelectorAll(".message");
-    if (messages.length === 0) {
-      aiResponse.textContent = "لا توجد رسائل لقراءتها.";
-      return;
+{
+  "messages": [
+    {
+      "id": "msg001",
+      "content": "تم تسجيل غياب الطالب في الحصة الأولى.",
+      "type": "school",
+      "priority": 5,
+      "audience": "supervisor",
+      "timestamp": "2025-07-23T07:30:00",
+      "defer_until": "2025-07-23T07:30:00"
+    },
+    {
+      "id": "msg002",
+      "content": "يرجى مراجعة توصية المدرسة الذكية لهذا الأسبوع.",
+      "type": "school",
+      "priority": 3,
+      "audience": "user",
+      "timestamp": "2025-07-23T08:00:00",
+      "defer_until": "2025-07-23T08:00:00"
+    },
+    {
+      "id": "msg003",
+      "content": "تم تفعيل نمط الإنزال الموحد بسبب حالة الطوارئ.",
+      "type": "emergency",
+      "priority": 5,
+      "audience": "all",
+      "timestamp": "2025-07-23T07:45:00",
+      "defer_until": "2025-07-23T07:45:00"
+    },
+    {
+      "id": "msg004",
+      "content": "تنبيه صحي: حملة تطعيم تبدأ الساعة 10 صباحًا.",
+      "type": "health",
+      "priority": 2,
+      "audience": "user",
+      "timestamp": "2025-07-23T10:00:00",
+      "defer_until": "2025-07-23T09:30:00"
+    },
+    {
+      "id": "msg005",
+      "content": "تم تجاوز عدد الغيابات المسموح به للطالب.",
+      "type": "school",
+      "priority": 4,
+      "audience": "supervisor",
+      "timestamp": "2025-07-23T08:15:00",
+      "defer_until": "2025-07-23T08:15:00"
+    },
+    {
+      "id": "msg006",
+      "content": "يوجد ازدحام مروري في شارع القدس، يُنصح بتغيير المسار.",
+      "type": "urban",
+      "priority": 3,
+      "audience": "user",
+      "timestamp": "2025-07-23T08:05:00",
+      "defer_until": "2025-07-23T08:00:00"
     }
-
-    let combinedText = "";
-    messages.forEach(msg => {
-      combinedText += msg.textContent + " ";
-    });
-
-    aiResponse.textContent = "جاري قراءة الرسائل...";
-
-    const utterance = new SpeechSynthesisUtterance(combinedText);
-    utterance.lang = "ar";
-
-    // ضبط نغمة الصوت حسب مستوى التنبيه
-    if (level === "مرتفع") {
-      utterance.rate = 1.3;
-      utterance.pitch = 0.8;
-    } else if (level === "متوسط") {
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-    } else {
-      utterance.rate = 0.9;
-      utterance.pitch = 1.2;
-    }
-
-    speechSynthesis.speak(utterance);
-  });
-});
+  ]
+}
