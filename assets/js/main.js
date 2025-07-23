@@ -31,20 +31,25 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-  fetch('assets/config/moves/seasonal.json')
-    .then(res => res.json())
-    .then(data => {
-      if (data.snow_mode === true) {
-        document.body.classList.add("snow-theme");
-      }
-    });
-
   fetch('assets/config/moves/symbolic_moves.json')
     .then(res => res.json())
     .then(data => {
       const moveLabel = document.getElementById("symbolic-move");
       if (moveLabel && data.current_move) {
         moveLabel.textContent = `النقلة الرمزية الحالية: ${data.current_move}`;
+      }
+    });
+
+  fetch('assets/config/moves/seasonal.json')
+    .then(res => res.json())
+    .then(data => {
+      if (data.snow_mode === true) {
+        document.body.classList.add("snow-theme");
+      }
+
+      const seasonInfo = document.getElementById("season-info");
+      if (seasonInfo && data.season_label && data.season_note) {
+        seasonInfo.textContent = `${data.season_label} – ${data.season_note}`;
       }
     });
 });
