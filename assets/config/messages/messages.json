@@ -1,0 +1,22 @@
+{
+  "messages": [
+    {
+      "id": "msg001",
+      "content": "تنبيه صحي: حملة تطعيم تبدأ الساعة 10 صباحًا.",
+      "type": "health",
+      "priority": 2,
+      "audience": "user",
+      "timestamp": "2025-07-23T09:00:00",
+      "defer_until": "2025-07-23T09:00:00"
+    },
+    {
+      "id": "msg002",
+      "content": "تم تسجيل غياب الطالب في الحصة الأولى.",
+      "type": "school",
+      "priority": 3,
+      "audience": "user",
+      "timestamp": "2025-07-23T08:00:00",
+      "defer_until": "2025-07-23T08:30:00"
+    }
+  ]
+}
