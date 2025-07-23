@@ -51,5 +51,15 @@ document.addEventListener("DOMContentLoaded", () => {
       if (seasonInfo && data.season_label && data.season_note) {
         seasonInfo.textContent = `${data.season_label} – ${data.season_note}`;
       }
+
+      const recommendation = document.getElementById("recommendation-mode");
+      if (recommendation && data.recommendation_mode) {
+        recommendation.textContent = `نمط التوصية: ${data.recommendation_mode}`;
+      }
+
+      const alert = document.getElementById("alert-level");
+      if (alert && data.alert_level) {
+        alert.textContent = `مستوى التنبيه: ${data.alert_level}`;
+      }
     });
 });
