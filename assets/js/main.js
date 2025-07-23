@@ -73,3 +73,24 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  const alertSelect = document.getElementById("alert-select");
+  if (alertSelect) {
+    alertSelect.addEventListener("change", (e) => {
+      const level = e.target.value;
+      localStorage.setItem("alert_level", level);
+      updateAlertDisplay(level);
+    });
+  }
+
+  const savedMode = localStorage.getItem("recommendation_mode");
+  if (savedMode) {
+    updateRecommendationDisplay(savedMode);
+    if (recommendationSelect) recommendationSelect.value = savedMode;
+  }
+
+  const savedLevel = localStorage.getItem("alert_level");
+  if (savedLevel) {
+    updateAlertDisplay(savedLevel);
+    if (alertSelect) alertSelect.value = savedLevel;
+  }
+});
