@@ -6,12 +6,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (contact && data.email) {
         contact.innerHTML = `<strong><a href="mailto:${data.email}">${data.email}</a></strong>`;
       }
-    })
-    .catch(() => {
-      const contact = document.getElementById("contact-email");
-      if (contact) {
-        contact.textContent = "تعذر تحميل عنوان التواصل.";
-      }
     });
 
   fetch('assets/config/entities/ramallah.json')
@@ -20,13 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const entityInfo = document.getElementById("entity-info");
       if (entityInfo && data.entity && data.symbolic_label) {
         entityInfo.textContent = `${data.entity} – ${data.symbolic_label}`;
-        entityInfo.style.color = "#888";
-      }
-    })
-    .catch(() => {
-      const entityInfo = document.getElementById("entity-info");
-      if (entityInfo) {
-        entityInfo.textContent = "لم يتم تحميل تعريف المدينة الرمزية.";
         entityInfo.style.color = "#888";
       }
     });
@@ -77,4 +64,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  const recommendationSelect = document.getElementById("
+  const recommendationSelect = document.getElementById("recommendation-select");
+  if (recommendationSelect) {
+    recommendationSelect.addEventListener("change", (e) => {
+      const mode = e.target.value;
+      localStorage.setItem("recommendation_mode", mode);
+      updateRecommendationDisplay(mode);
+    });
+  }
+
