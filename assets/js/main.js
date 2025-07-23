@@ -62,4 +62,19 @@ document.addEventListener("DOMContentLoaded", () => {
         alert.textContent = `مستوى التنبيه: ${data.alert_level}`;
       }
     });
-});
+
+  function updateRecommendationDisplay(mode) {
+    const recommendation = document.getElementById("recommendation-mode");
+    if (recommendation) {
+      recommendation.textContent = `نمط التوصية: ${mode}`;
+    }
+  }
+
+  function updateAlertDisplay(level) {
+    const alert = document.getElementById("alert-level");
+    if (alert) {
+      alert.textContent = `مستوى التنبيه: ${level}`;
+    }
+  }
+
+  const recommendationSelect = document.getElementById("
