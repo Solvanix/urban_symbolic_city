@@ -27,60 +27,88 @@
 
   <div class="container">
 
-    <section id="apps">
-      <h2>التطبيقات الرمزية</h2>
-
+    <!-- الحالة الرمزية الزمنية -->
+    <section id="status">
+      <h2>الحالة الرمزية الحالية</h2>
       <p id="entity-info">جارٍ تحميل تعريف المدينة الرمزية...</p>
       <div id="symbolic-move" class="symbolic-move">جارٍ تحميل النقلة الرمزية الحالية...</div>
       <div id="season-info" class="symbolic-move">جارٍ تحميل الحالة الموسمية...</div>
       <div id="recommendation-mode" class="symbolic-move">جارٍ تحميل نمط التوصية...</div>
       <div id="alert-level" class="symbolic-move">جارٍ تحميل مستوى التنبيه...</div>
+    </section>
 
-      <div class="panel">
-        <h2>اختيار رمزي مخصص</h2>
+    <!-- واجهة اختيار رمزية -->
+    <section id="settings">
+      <h2>اختيارات المستخدم الرمزية</h2>
+      <label for="recommendation-select">اختر نمط التوصية:</label>
+      <select id="recommendation-select">
+        <option value="مدرسي">مدرسي</option>
+        <option value="صحي">صحي</option>
+        <option value="حضري">حضري</option>
+        <option value="طوارئ">طوارئ</option>
+      </select>
 
-        <label for="recommendation-select">اختر نمط التوصية:</label>
-        <select id="recommendation-select">
-          <option value="مدرسي">مدرسي</option>
-          <option value="صحي">صحي</option>
-          <option value="حضري">حضري</option>
-          <option value="طوارئ">طوارئ</option>
-        </select>
+      <br /><br />
 
-        <br /><br />
+      <label for="alert-select">اختر مستوى التنبيه:</label>
+      <select id="alert-select">
+        <option value="منخفض">منخفض</option>
+        <option value="متوسط">متوسط</option>
+        <option value="مرتفع">مرتفع</option>
+      </select>
+    </section>
 
-        <label for="alert-select">اختر مستوى التنبيه:</label>
-        <select id="alert-select">
-          <option value="منخفض">منخفض</option>
-          <option value="متوسط">متوسط</option>
-          <option value="مرتفع">مرتفع</option>
-        </select>
-      </div>
-
+    <!-- التطبيقات الرمزية -->
+    <section id="apps">
+      <h2>التطبيقات الرمزية</h2>
       <div class="grid">
+
         <div class="card">
-          <img src="assets/images/school_recommendation.png" alt="School Drop App" />
           <h3>توصية المدرسة الذكية</h3>
           <p>نقطة الانطلاق الرمزية بين المستخدم والمدرسة والنموذج الذكي.</p>
           <a href="interfaces/symbolic_app/recommendation/build_core_recommendation.html" class="button">عرض التوصية</a>
         </div>
 
         <div class="card">
-          <img src="assets/images/parking_center.png" alt="Parking Center App" />
           <h3>مركز الاصطفاف الرمزي</h3>
           <p>تجربة حضرية تستدعي الدرونات وتكافئ التفاعل الذكي عبر النقلات والمكافآت.</p>
           <a href="projects/symbolic_parking_center/index.html" class="button">عرض المشروع</a>
         </div>
 
         <div class="card">
-          <img src="assets/images/drone_interface.png" alt="Drone Interface" />
           <h3>واجهة تشغيل الدرون</h3>
           <p>تفاعل مباشر مع الدرون الحضري لطلب بث، تصوير، ونقل ذكي.</p>
           <a href="interfaces/drone_interface.html" class="button">تشغيل الواجهة</a>
         </div>
+
+        <div class="card">
+          <h3>الرسائل الرمزية</h3>
+          <p>عرض التنبيهات والتوصيات من المدرسة والنظام والذكاء الاصطناعي.</p>
+          <a href="interfaces/symbolic_app/messages/symbolic_messages.html" class="button">عرض الرسائل</a>
+        </div>
+
+        <div class="card">
+          <h3>صفحة الطوارئ الرمزية</h3>
+          <p>تفعيل الإنزال الموحد والتوصيات العاجلة في حالات الطوارئ.</p>
+          <a href="interfaces/symbolic_app/emergency/symbolic_emergency.html" class="button">عرض الطوارئ</a>
+        </div>
+
+        <div class="card">
+          <h3>صفحة التوصية الصحية</h3>
+          <p>توصيات غذائية ووقائية حسب الحالة الرمزية الصحية.</p>
+          <a href="interfaces/symbolic_app/health/symbolic_health.html" class="button">عرض الصحة</a>
+        </div>
+
+        <div class="card">
+          <h3>صفحة البنية التحتية الرمزية</h3>
+          <p>توصيات حضرية ذكية مرتبطة بالنقل والمرافق العامة.</p>
+          <a href="interfaces/symbolic_app/infrastructure/symbolic_infrastructure.html" class="button">عرض البنية</a>
+        </div>
+
       </div>
     </section>
 
+    <!-- الذكاء الاصطناعي الرمزي -->
     <section id="ai">
       <h2>الذكاء الاصطناعي الرمزي</h2>
       <p>يمكنك التفاعل صوتيًا مع النظام الرمزي لتوجيهك، تغيير الأنماط، أو قراءة الرسائل.</p>
@@ -88,18 +116,21 @@
       <div id="ai-response" class="symbolic-move">...</div>
     </section>
 
+    <!-- الدليل الرمزي -->
     <section id="guide">
       <h2>الدليل الرمزي</h2>
       <p>صفحات تفاعلية تربط التقنية بالحياة اليومية، موجهة للطلاب وأولياء الأمور والجهات المدنية.</p>
       <a href="guide/index.html" class="button">استعراض الدليل</a>
     </section>
 
+    <!-- المستودع -->
     <section id="repository">
       <h2>المستودع البرمجي</h2>
       <p>للاطلاع على الكود والواجهات الرمزية، يمكنك زيارة المستودع الكامل للمشروع:</p>
       <a href="https://github.com/Solvanix/urban_symbolic_city" class="button" target="_blank">الانتقال إلى GitHub</a>
     </section>
 
+    <!-- التواصل -->
     <section id="contact">
       <h2>تواصل معنا</h2>
       <p id="contact-email">جارٍ تحميل عنوان التواصل...</p>
