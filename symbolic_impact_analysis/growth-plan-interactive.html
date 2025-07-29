@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<!-- saved from url=(0060)file:///E:/urban_symbolic_city_archive_v1/Coding%20Area.html -->
+<html lang="ar"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <title>📅 خطة النمو والتوسع – تفاعلية</title>
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background-color: #fefefe;
+      color: #333;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #2e7d32;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
+    }
+    th {
+      background-color: #e0f2f1;
+    }
+    .highlight {
+      background-color: #fff9c4;
+      font-weight: bold;
+    }
+    input {
+      width: 80px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<h2>📦 تكاليف ومبيعات الشهر الأول</h2>
+
+<table id="costs">
+  <tbody><tr><th>#</th><th>البند</th><th>التكلفة ($)</th><th>العدد</th><th>الإجمالي ($)</th></tr>
+  <!-- 3 بنود كمثال -->
+  <tr>
+    <td>1</td><td>خدمة تصميم</td>
+    <td><input type="number" value="0" onchange="calculate()"></td>
+    <td><input type="number" value="0" onchange="calculate()"></td>
+    <td class="total">350</td>
+  </tr>
+  <tr>
+    <td>2</td><td>استضافة</td>
+    <td><input type="number" value="0" onchange="calculate()"></td>
+    <td><input type="number" value="0" onchange="calculate()"></td>
+    <td class="total">0</td>
+  </tr>
+  <tr class="highlight"><td colspan="4">إجمالي التكاليف</td><td id="totalCosts">350</td></tr>
+</tbody></table>
+
+<table id="sales">
+  <tbody><tr><th>#</th><th>المنتج</th><th>سعر البيع ($)</th><th>العدد</th><th>الإجمالي ($)</th></tr>
+  <tr>
+    <td>1</td><td>رمز تفاعلي</td>
+    <td><input type="number" value="0" onchange="calculate()"></td>
+    <td><input type="number" value="0" onchange="calculate()"></td>
+    <td class="total">0</td>
+  </tr>
+  <tr>
+    <td>2</td><td>خدمة تحليل</td>
+    <td><input type="number" value="0" onchange="calculate()"></td>
+    <td><input type="number" value="0" onchange="calculate()"></td>
+    <td class="total">0</td>
+  </tr>
+  <tr class="highlight"><td colspan="4">إجمالي المبيعات</td><td id="totalSales">0</td></tr>
+  <tr class="highlight"><td colspan="4">الربح الشهري</td><td id="profit">-350</td></tr>
+</tbody></table>
+
+<script>
+function calculate() {
+  let costTable = document.querySelectorAll("#costs tr");
+  let salesTable = document.querySelectorAll("#sales tr");
+  let totalCosts = 0;
+  let totalSales = 0;
+
+  // حساب التكاليف
+  for (let i = 1; i < costTable.length - 1; i++) {
+    let inputs = costTable[i].querySelectorAll("input");
+    let total = inputs[0].value * inputs[1].value;
+    costTable[i].querySelector(".total").textContent = total;
+    totalCosts += total;
+  }
+
+  // حساب المبيعات
+  for (let i = 1; i < salesTable.length - 2; i++) {
+    let inputs = salesTable[i].querySelectorAll("input");
+    let total = inputs[0].value * inputs[1].value;
+    salesTable[i].querySelector(".total").textContent = total;
+    totalSales += total;
+  }
+
+  document.getElementById("totalCosts").textContent = totalCosts;
+  document.getElementById("totalSales").textContent = totalSales;
+  document.getElementById("profit").textContent = totalSales - totalCosts;
+}
+</script>
+
+
+
+</body></html>
