@@ -35,9 +35,23 @@ export const reportsRouter = router({
       latitude: z.string().max(32).optional(),
       longitude: z.string().max(32).optional(),
       address: z.string().max(255).optional(),
+      photo: z.object({
+        fileName: z.string().trim().min(1).max(180),
+        contentType: z.enum(["image/jpeg", "image/png", "image/webp"]),
+        base64: z.string().min(1).max(7_000_000),
+      }).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const report = await createReport({ ...input, reporterId: ctx.user.id, status: "submitted" });
+      let photoUrls: string | undefined;
+      if (input.photo) {
+        const bytes = Buffer.from(input.photo.base64, "base64");
+        if (bytes.length > 5 * 1024 * 1024) throw new TRPCError({ code: "BAD_REQUEST", message: "حجم الصورة يتجاوز 5MB" });
+        const safeName = input.photo.fileName.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(-120) || "report-photo";
+        const uploaded = await storagePut(`reports/${ctx.user.id}/citizen-${Date.now()}-${safeName}`, bytes, input.photo.contentType);
+        photoUrls = uploaded.url;
+      }
+      const { photo: _photo, ...reportInput } = input;
+      const report = await createReport({ ...reportInput, photoUrls, reporterId: ctx.user.id, status: "submitted" });
       await addReportEvent({ reportId: report.id, actorId: ctx.user.id, fromStatus: null, toStatus: "submitted", note: "تم إنشاء البلاغ من المواطن" });
       await createNotification({ userId: ctx.user.id, kind: "report", title: "تم استلام البلاغ", body: `استلمنا بلاغك «${report.title}» وسيظهر لك كل تحديث في مركز التنبيهات.`, href: "/reports", sourceType: "report", sourceId: report.id });
       return report;

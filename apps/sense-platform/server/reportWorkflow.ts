@@ -7,6 +7,13 @@ export function canCitizenRateReport(status: string, reporterId: number, citizen
 
 export const evidenceContentTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"] as const;
 export type EvidenceContentType = (typeof evidenceContentTypes)[number];
+export const citizenPhotoContentTypes = ["image/jpeg", "image/png", "image/webp"] as const;
+export function isSupportedCitizenPhotoType(contentType: string): contentType is (typeof citizenPhotoContentTypes)[number] {
+  return (citizenPhotoContentTypes as readonly string[]).includes(contentType);
+}
+export function isCitizenPhotoSizeAllowed(size: number) {
+  return Number.isFinite(size) && size > 0 && size <= 5 * 1024 * 1024;
+}
 
 export function isSupportedEvidenceType(contentType: string): contentType is EvidenceContentType {
   return (evidenceContentTypes as readonly string[]).includes(contentType);

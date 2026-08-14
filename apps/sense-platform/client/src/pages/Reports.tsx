@@ -14,6 +14,16 @@ import { useAuth } from "../_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { MapView } from "@/components/Map";
 
+async function fileToBase64(file: File): Promise<string> {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("تعذر قراءة الصورة"));
+    reader.readAsDataURL(file);
+  });
+  return dataUrl.split(",")[1] ?? "";
+}
+
 const statusLabels: Record<string, string> = {
   submitted: "مرسل",
   review: "قيد المراجعة",
@@ -48,10 +58,11 @@ export default function Reports() {
   const [priority, setPriority] = useState("normal");
   const [address, setAddress] = useState("");
   const [coordinates, setCoordinates] = useState<{ latitude: string; longitude: string } | null>(null);
+  const [photo, setPhoto] = useState<{ fileName: string; contentType: "image/jpeg" | "image/png" | "image/webp"; base64: string } | undefined>();
   const reportsQuery = trpc.reports.mine.useQuery(undefined, { enabled: Boolean(user) });
   const createReport = trpc.reports.create.useMutation({
     onSuccess: () => {
-      setTitle(""); setDescription(""); setAddress(""); setCoordinates(null);
+      setTitle(""); setDescription(""); setAddress(""); setCoordinates(null); setPhoto(undefined);
       toast.success("تم إرسال البلاغ للمراجعة");
       void reportsQuery.refetch();
     },
@@ -70,10 +81,11 @@ export default function Reports() {
     <main className="container space-y-8 py-10">
       <header className="max-w-3xl space-y-3"><p className="font-mono text-xs font-bold uppercase tracking-[0.24em] text-primary">CIVIC REPORTS / 01</p><h1 className="text-4xl font-black tracking-tight md:text-5xl">بلاغ واضح، متابعة يمكن فهمها.</h1><p className="text-lg leading-8 text-muted-foreground">سجّل عائقًا أو احتياجًا حضريًا مع وصف كافٍ وموقع اختياري. المعلومات المعروضة هنا أولية وتحتاج مراجعة ميدانية قبل اعتمادها.</p></header>
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <Card><CardHeader><CardTitle className="flex items-center gap-2"><Send className="h-5 w-5 text-primary" />إرسال بلاغ جديد</CardTitle></CardHeader><CardContent><form className="space-y-5" onSubmit={event => { event.preventDefault(); createReport.mutate({ title, description, category: category as "accessibility", priority: priority as "normal", address: address || undefined, latitude: coordinates?.latitude, longitude: coordinates?.longitude }); }}>
+        <Card><CardHeader><CardTitle className="flex items-center gap-2"><Send className="h-5 w-5 text-primary" />إرسال بلاغ جديد</CardTitle></CardHeader><CardContent><form className="space-y-5" onSubmit={event => { event.preventDefault(); createReport.mutate({ title, description, category: category as "accessibility", priority: priority as "normal", address: address || undefined, latitude: coordinates?.latitude, longitude: coordinates?.longitude, photo }); }}>
           <div className="space-y-2"><Label htmlFor="report-title">عنوان البلاغ</Label><Input id="report-title" value={title} onChange={e => setTitle(e.target.value)} placeholder="مثال: مدخل غير مهيأ عند محطة النقل" required minLength={3} /></div>
           <div className="space-y-2"><Label htmlFor="report-description">الوصف</Label><Textarea id="report-description" value={description} onChange={e => setDescription(e.target.value)} placeholder="ما الذي حدث؟ وما أثره على الوصول أو السلامة؟" required minLength={10} rows={5} /></div>
           <div className="grid gap-4 sm:grid-cols-2"><div className="space-y-2"><Label>التصنيف</Label><Select value={category} onValueChange={setCategory}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="accessibility">إتاحة ووصول</SelectItem><SelectItem value="road">طريق أو رصيف</SelectItem><SelectItem value="lighting">إنارة</SelectItem><SelectItem value="waste">نظافة</SelectItem><SelectItem value="transport">نقل</SelectItem><SelectItem value="other">أخرى</SelectItem></SelectContent></Select></div><div className="space-y-2"><Label>الأولوية المقترحة</Label><Select value={priority} onValueChange={setPriority}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="low">منخفضة</SelectItem><SelectItem value="normal">عادية</SelectItem><SelectItem value="high">مرتفعة</SelectItem><SelectItem value="urgent">عاجلة</SelectItem></SelectContent></Select></div></div>
+          <div className="space-y-2"><Label htmlFor="report-photo">صورة توضيحية (اختيارية، حتى 5MB)</Label><Input id="report-photo" type="file" accept="image/jpeg,image/png,image/webp" onChange={async event => { const file = event.target.files?.[0]; if (!file) return; if (file.size > 5 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) { toast.error("اختر صورة JPG أو PNG أو WebP بحجم لا يتجاوز 5MB"); event.currentTarget.value = ""; return; } try { setPhoto({ fileName: file.name, contentType: file.type as "image/jpeg" | "image/png" | "image/webp", base64: await fileToBase64(file) }); } catch { toast.error("تعذر قراءة الصورة"); } }} /><p className="text-xs text-muted-foreground">تُستخدم الصورة ضمن دورة المراجعة التشغيلية ولا تُعرض للعامة تلقائيًا.</p></div>
           <div className="space-y-2"><Label htmlFor="report-address">الموقع أو العنوان (اختياري)</Label><div className="relative"><MapPin className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" /><Input id="report-address" className="pr-9" value={address} onChange={e => setAddress(e.target.value)} placeholder="يمكنك إضافة العنوان يدويًا الآن" /></div></div>
           <div className="space-y-2"><div className="flex items-center justify-between gap-3"><Label>تحديد النقطة على الخريطة (اختياري)</Label><span className="text-xs text-muted-foreground">{coordinates ? `${coordinates.latitude}, ${coordinates.longitude}` : "لم تُحدد نقطة"}</span></div><div className="overflow-hidden rounded-xl border border-border/70"><MapView className="h-64" initialCenter={{ lat: 24.7136, lng: 46.6753 }} initialZoom={11} onMapReady={map => { map.addListener("click", (event: google.maps.MapMouseEvent) => { const latitude = event.latLng?.lat(); const longitude = event.latLng?.lng(); if (latitude !== undefined && longitude !== undefined) setCoordinates({ latitude: latitude.toFixed(6), longitude: longitude.toFixed(6) }); }); }} /></div><p className="text-xs leading-6 text-muted-foreground">يمكنك استخدام العنوان اليدوي إذا لم تُحمّل الخريطة أو تعذر تحديد الموقع. الإحداثيات المقترحة تحتاج مراجعة ميدانية.</p></div>
           <Button type="submit" disabled={createReport.isPending} className="w-full gap-2">{createReport.isPending ? "جارٍ الإرسال…" : "إرسال للمراجعة"}<Send className="h-4 w-4" /></Button>
