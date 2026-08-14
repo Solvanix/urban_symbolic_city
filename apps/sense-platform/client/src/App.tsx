@@ -10,6 +10,17 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Preferences from "./pages/Preferences";
+import TripPlanner from "./pages/TripPlanner";
+import InfoPage from "./pages/InfoPage";
+import Reports from "./pages/Reports";
+import OperationsReports from "./pages/OperationsReports";
+import ProviderAdmin from "./pages/ProviderAdmin";
+import AdminProviders from "./pages/AdminProviders";
+import Notifications from "./pages/Notifications";
+import RoleDashboard from "./pages/RoleDashboard";
+import ProviderDetail from "./pages/ProviderDetail";
+import ReportAssistant from "./pages/ReportAssistant";
+import Orders from "./pages/Orders";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -18,9 +29,25 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path="/profile/preferences" component={Preferences} />
       <Route path="/preferences" component={Preferences} />
+      <Route path="/plan" component={TripPlanner} />
+      <Route path="/ai-planner" component={TripPlanner} />
+      <Route path="/reports" component={Reports} />
+      <Route path="/ops/reports" component={OperationsReports} />
+      <Route path="/provider-admin" component={ProviderAdmin} />
+      <Route path="/admin/providers" component={AdminProviders} />
+      <Route path="/notifications" component={Notifications} />
+      <Route path="/dashboard" component={RoleDashboard} />
+      <Route path="/ai-assistant" component={ReportAssistant} />
+      <Route path="/orders" component={Orders} />
+      <Route path="/about" component={InfoPage} />
+      <Route path="/help" component={InfoPage} />
+      <Route path="/contact" component={InfoPage} />
+      <Route path="/privacy" component={InfoPage} />
+      <Route path="/terms" component={InfoPage} />
       <Route path="/tourism" component={PublicDirectory} />
       <Route path="/services" component={PublicDirectory} />
       <Route path="/providers" component={PublicDirectory} />
+      <Route path="/providers/:kind/:id" component={ProviderDetail} />
       <Route path="/municipal-services" component={PublicDirectory} />
       <Route path="/market" component={LocalMarket} />
       <Route path="/store" component={Store} />

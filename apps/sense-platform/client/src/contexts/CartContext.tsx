@@ -44,7 +44,7 @@ type CartContextValue = {
   updateQuantity: (lineId: string, quantity: number) => Promise<void>;
   removeItem: (lineId: string) => Promise<void>;
   clearCart: () => void;
-  proceedToCheckout: () => void;
+  proceedToCheckout: () => Promise<void>;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -160,11 +160,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart(null);
   }, []);
 
-  const proceedToCheckout = useCallback(() => {
+  const proceedToCheckout = useCallback(async () => {
     if (!cart?.checkoutUrl) return;
+    try {
+      await utils.client.commerce.checkout.recordHandoff.mutate({ checkoutId: cart.id, checkoutUrl: cart.checkoutUrl });
+    } catch {
+      // Guest checkout remains supported; only authenticated users get a handoff history.
+    }
     // checkoutUrl already has channel=online_store appended server-side.
     window.open(cart.checkoutUrl, "_blank", "noopener,noreferrer");
-  }, [cart]);
+  }, [cart, utils.client]);
 
   const value = useMemo<CartContextValue>(
     () => ({

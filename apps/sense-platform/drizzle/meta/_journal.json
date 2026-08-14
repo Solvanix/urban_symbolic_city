@@ -8,6 +8,41 @@
       "when": 1786743738970,
       "tag": "0000_typical_metal_master",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1786747104379,
+      "tag": "0001_large_dark_phoenix",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1786748172713,
+      "tag": "0002_greedy_enchantress",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1786749132364,
+      "tag": "0003_past_venom",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1786750015824,
+      "tag": "0004_flimsy_firelord",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1786750343668,
+      "tag": "0005_easy_magus",
+      "breakpoints": true
     }
   ]
 }

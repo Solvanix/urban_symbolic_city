@@ -19,7 +19,8 @@ import {
   removeCartLines,
   updateCartLines,
 } from "../_core/shopify";
-import { publicProcedure, router } from "../_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { createCheckoutHandoff, createNotification, listCheckoutHandoffsForUser } from "../db";
 
 const cartLineInputSchema = z.object({
   variantId: z.string().min(1),
@@ -63,6 +64,18 @@ export const commerceRouter = router({
       .query(async ({ input }) => {
         return getCollectionByHandle(input.handle);
       }),
+  }),
+  checkout: router({
+    recordHandoff: protectedProcedure
+      .input(z.object({ checkoutId: z.string().min(1).max(255), checkoutUrl: z.string().url().max(2000) }))
+      .mutation(async ({ ctx, input }) => {
+        const handoff = await createCheckoutHandoff({ userId: ctx.user.id, checkoutId: input.checkoutId, checkoutUrl: input.checkoutUrl, status: "handed_off" });
+        if (handoff) {
+          await createNotification({ userId: ctx.user.id, kind: "order", title: "تم تحويل السلة إلى المتجر", body: "تم فتح Checkout الخارجي. حالة الطلب النهائية تُدار في المتجر الخارجي ولا تُعرض هنا قبل توفر تكامل موثوق.", href: input.checkoutUrl, sourceType: "checkout", sourceId: handoff.id });
+        }
+        return handoff;
+      }),
+    mine: protectedProcedure.query(({ ctx }) => listCheckoutHandoffsForUser(ctx.user.id)),
   }),
   cart: router({
     create: publicProcedure

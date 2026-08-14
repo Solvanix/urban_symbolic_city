@@ -210,6 +210,12 @@
   @keyframes reveal { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 }
 
+.sense-access-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: .5rem; padding: .65rem .8rem; border: 1px solid #d8e3f2; background: #fff; color: #071b42; }
+html { font-size: calc(100% * var(--sense-font-scale, 1)); }
+html[data-sense-contrast="high"] body { filter: contrast(1.18); }
+html[data-sense-motion="reduced"] *, html[data-sense-motion="reduced"] *::before, html[data-sense-motion="reduced"] *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .001ms !important; }
+@media (max-width: 640px) { .sense-access-toolbar { gap: .35rem; } .sense-access-toolbar button { min-height: 2.25rem; } }
+
 /* User-controlled accessibility preferences */
 html[data-sense-large-text="true"] { font-size: 112.5%; }
 html[data-sense-high-contrast="true"] body { filter: contrast(1.12); }

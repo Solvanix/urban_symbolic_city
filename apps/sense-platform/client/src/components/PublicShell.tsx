@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
+import AccessibilityToolbar from "@/components/AccessibilityToolbar";
 
 const navItems = [
   { href: "/services", label: "الخدمات" },
@@ -48,6 +49,7 @@ export default function PublicShell({ children }: { children: React.ReactNode })
         </div>
         {open && <div className="border-t border-[#d8e3f2] bg-white px-4 py-5 lg:hidden"><nav className="container flex flex-col gap-4">{navItems.map(item => <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className="border-b border-[#e6edf6] pb-3 font-bold text-[#183a67]">{item.label}</Link>)}<Button onClick={() => startLogin()} className="mt-2 bg-[#1355a3] text-white">دخول المنصة</Button></nav></div>}
       </header>
+      <div className="container py-3"><AccessibilityToolbar /></div>
       {children}
       <footer className="sense-grid mt-20 text-white">
         <div className="container grid gap-10 py-14 md:grid-cols-[1.2fr_.8fr_.8fr]">
