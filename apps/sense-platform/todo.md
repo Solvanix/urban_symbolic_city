@@ -292,14 +292,25 @@
 
 ## Access and publication request
 
-- [ ] التحقق من هوية حساب GitHub nareman7253-n2001 ونطاق الصلاحية المطلوب.
-- [ ] تحديد ما إذا كانت صلاحية المدير المطلوبة لحساب SENSE داخل التطبيق أم لعضوية مستودع GitHub، ثم تنفيذها في النطاق الصحيح فقط.
-- [ ] إعداد بيان حالة النشر: ما هو مبني، ما هو قابل للعرض عبر preview، وما تم نشره فعليًا أو لم يُنشر.
+- [x] التحقق من هوية حساب GitHub nareman7253-n2001 ونطاق الصلاحية المطلوب.
+- [x] تحديد ما إذا كانت صلاحية المدير المطلوبة لحساب SENSE داخل التطبيق أم لعضوية مستودع GitHub، ثم تنفيذها في النطاق الصحيح فقط.
+- [x] إعداد بيان حالة النشر: ما هو مبني، ما هو قابل للعرض عبر preview، وما تم نشره فعليًا أو لم يُنشر.
 
 ## GitHub source-of-truth correction
 
-- [ ] تجهيز نسخة SENSE الحالية داخل نسخة عمل من Solvanix/urban_symbolic_city تحت apps/sense-platform.
-- [ ] مراجعة .gitignore واستبعاد .env والأسرار وسجلات Manus والملفات المؤقتة قبل commit.
-- [ ] تشغيل install وtypecheck وtests وbuild داخل apps/sense-platform بعد الدمج.
-- [ ] إنشاء commit واضح ودفعه إلى فرع GitHub المقصود.
-- [ ] التحقق عبر GitHub API من ظهور ملفات SENSE والـ commit والـ README داخل المستودع.
+- [x] تجهيز نسخة SENSE الحالية داخل نسخة عمل من Solvanix/urban_symbolic_city تحت apps/sense-platform.
+- [x] مراجعة .gitignore واستبعاد .env والأسرار وسجلات Manus والملفات المؤقتة قبل commit.
+- [x] تشغيل install وtypecheck وtests وbuild داخل apps/sense-platform بعد الدمج.
+- [x] إنشاء commit واضح ودفعه إلى فرع GitHub المقصود.
+- [x] التحقق عبر GitHub API من ظهور ملفات SENSE والـ commit والـ README داخل المستودع.
+
+## Citizen rating milestone
+
+- [x] إضافة API وواجهة تقييم المواطن للبلاغات المغلقة فقط مع إظهار سبب المراجعة والحالات الجديدة.
+- [x] عزل قراءة وتعديل التقييم حسب reporterId وإضافة اختبار أهلية التقييم.
+
+## GitHub follow-up sync
+
+- [ ] مزامنة إصلاحات دورة البلاغات وواجهة OperationsReports وملاحظات التحقق البصري إلى apps/sense-platform.
+- [ ] إعادة تشغيل check وtests وbuild داخل نسخة GitHub وإنشاء commit متابعة ودفعه إلى main.
+- [ ] التحقق من ظهور commit المتابعة عبر GitHub API.

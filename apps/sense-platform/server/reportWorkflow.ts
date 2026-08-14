@@ -1,6 +1,10 @@
 export type ReportRole = "user" | "citizen" | "staff" | "field" | "supervisor" | "admin";
 export type ReportStatus = "draft" | "submitted" | "review" | "needs_info" | "rejected" | "assigned" | "in_progress" | "awaiting_approval" | "closed" | "reopened";
 
+export function canCitizenRateReport(status: string, reporterId: number, citizenId: number) {
+  return status === "closed" && reporterId === citizenId;
+}
+
 export const evidenceContentTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"] as const;
 export type EvidenceContentType = (typeof evidenceContentTypes)[number];
 

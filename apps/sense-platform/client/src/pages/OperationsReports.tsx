@@ -11,6 +11,8 @@ import { toast } from "sonner";
 const labels: Record<string, string> = {
   submitted: "مرسل",
   review: "قيد المراجعة",
+  needs_info: "بحاجة إلى معلومات إضافية",
+  rejected: "مرفوض بسبب موثق",
   assigned: "مسند",
   in_progress: "قيد التنفيذ",
   awaiting_approval: "بانتظار الاعتماد",
@@ -20,10 +22,14 @@ const labels: Record<string, string> = {
 
 const actions: Record<
   string,
-  { label: string; toStatus: "review" | "assigned" | "in_progress" | "awaiting_approval" | "closed" | "reopened" }[]
+  { label: string; toStatus: "review" | "needs_info" | "rejected" | "assigned" | "in_progress" | "awaiting_approval" | "closed" | "reopened" }[]
 > = {
   submitted: [{ label: "بدء المراجعة", toStatus: "review" }],
-  review: [{ label: "إسناد", toStatus: "assigned" }],
+  review: [
+    { label: "إسناد", toStatus: "assigned" },
+    { label: "طلب معلومات", toStatus: "needs_info" },
+    { label: "رفض موثق", toStatus: "rejected" },
+  ],
   assigned: [{ label: "بدء التنفيذ", toStatus: "in_progress" }],
   in_progress: [{ label: "طلب الاعتماد", toStatus: "awaiting_approval" }],
   awaiting_approval: [
@@ -32,6 +38,8 @@ const actions: Record<
   ],
   closed: [{ label: "إعادة فتح", toStatus: "reopened" }],
   reopened: [{ label: "إعادة للمراجعة", toStatus: "review" }],
+  needs_info: [{ label: "إعادة للمراجعة", toStatus: "review" }],
+  rejected: [{ label: "إعادة فتح للمراجعة", toStatus: "reopened" }],
 };
 
 type EvidencePayload = {
@@ -156,7 +164,11 @@ export default function OperationsReports() {
                   {item.evidenceUrl && <a href={item.evidenceUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs font-bold text-primary underline">عرض آخر دليل</a>}
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
-                  {(actions[item.status] ?? []).map(action => <Button key={action.toStatus} size="sm" variant={action.toStatus === "closed" ? "default" : "outline"} disabled={transition.isPending} onClick={() => transition.mutate({ id: item.id, toStatus: action.toStatus })}>{action.label}</Button>)}
+                  {(actions[item.status] ?? []).map(action => <Button key={action.toStatus} size="sm" variant={action.toStatus === "closed" ? "default" : "outline"} disabled={transition.isPending} onClick={() => {
+                    const note = action.toStatus === "needs_info" || action.toStatus === "rejected" ? window.prompt("اكتب سبب الإجراء ليظهر للمواطن:")?.trim() : undefined;
+                    if ((action.toStatus === "needs_info" || action.toStatus === "rejected") && !note) return;
+                    transition.mutate({ id: item.id, toStatus: action.toStatus, note });
+                  }}>{action.label}</Button>)}
                   {(item.status === "in_progress" || item.status === "awaiting_approval") && <EvidencePicker reportId={item.id} pending={uploadEvidence.isPending} onUpload={payload => uploadEvidence.mutate(payload)} />}
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { ArrowLeft, ClipboardList, MapPin, Send, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ClipboardList, MapPin, Send, ShieldCheck, Star } from "lucide-react";
 import PublicShell from "@/components/PublicShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,22 @@ const statusLabels: Record<string, string> = {
   closed: "مغلق",
   reopened: "معاد فتحه",
   draft: "مسودة",
+  needs_info: "بحاجة إلى معلومات إضافية",
+  rejected: "مرفوض بسبب موثق",
 };
+
+function ReportRating({ reportId }: { reportId: number }) {
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const existing = trpc.reports.rating.useQuery({ reportId });
+  const save = trpc.reports.rate.useMutation({
+    onSuccess: () => { toast.success("تم حفظ تقييمك"); void existing.refetch(); },
+    onError: error => toast.error(error.message || "تعذر حفظ التقييم"),
+  });
+  const value = existing.data?.rating ?? rating;
+  if (existing.isLoading || existing.data) return existing.data ? <div className="mt-3 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">تقييمك المسجل: {existing.data.rating}/5{existing.data.comment ? ` · ${existing.data.comment}` : ""}</div> : null;
+  return <div className="mt-3 rounded-lg border border-[#dce8f5] bg-[#f8fbff] p-3"><p className="text-sm font-bold text-[#071b42]">كيف كانت معالجة البلاغ؟</p><div className="mt-2 flex items-center gap-1" dir="ltr">{[1, 2, 3, 4, 5].map(item => <button type="button" key={item} aria-label={`تقييم ${item} من 5`} onClick={() => setRating(item)} className="rounded p-1 text-[#f5c542] hover:bg-[#fff4c7]"><Star size={18} fill={item <= value ? "currentColor" : "none"} /></button>)}</div><Input className="mt-2" value={comment} onChange={event => setComment(event.target.value)} placeholder="تعليق اختياري" maxLength={1000} /><Button className="mt-2" size="sm" disabled={!rating || save.isPending} onClick={() => save.mutate({ reportId, rating, comment: comment || undefined })}>{save.isPending ? "جارٍ الحفظ…" : "حفظ التقييم"}</Button></div>;
+}
 
 export default function Reports() {
   const { user, loading } = useAuth();
@@ -65,7 +80,7 @@ export default function Reports() {
         </form></CardContent></Card>
         <Card className="bg-primary text-primary-foreground"><CardHeader><CardTitle>مبادئ البلاغ المسؤول</CardTitle></CardHeader><CardContent className="space-y-4 text-sm leading-7"><p>اكتب وصفًا يمكن للفريق الميداني فهمه دون كشف بيانات شخصية لا يحتاجها البلاغ.</p><p>لا تُعرض البلاغات أو مواقعها للعامة تلقائيًا. تُستخدم البيانات ضمن الصلاحيات التشغيلية المحددة.</p><Link href="/help" className="inline-flex items-center gap-2 font-bold text-primary-foreground underline underline-offset-4">اقرأ إرشادات المساعدة <ArrowLeft className="h-4 w-4" /></Link></CardContent></Card>
       </div>
-      <section className="space-y-4"><div className="flex items-center gap-2"><ClipboardList className="h-5 w-5 text-primary" /><h2 className="text-2xl font-black">بلاغاتي</h2></div>{reportsQuery.isLoading ? <p className="text-muted-foreground">جارٍ تحميل البلاغات…</p> : reportsQuery.error ? <p className="text-destructive">تعذر تحميل البلاغات حاليًا.</p> : reportsQuery.data?.length ? <div className="grid gap-3">{reportsQuery.data.map(report => <Card key={report.id}><CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-bold">{report.title}</p><p className="text-sm text-muted-foreground">رقم البلاغ #{report.id} · {new Date(report.createdAt).toLocaleDateString("ar-SA")}</p></div><span className="w-fit rounded-full bg-secondary px-3 py-1 text-sm font-bold">{statusLabels[report.status] ?? report.status}</span></CardContent></Card>)}</div> : <Card><CardContent className="p-6 text-center text-muted-foreground">لا توجد بلاغات مرتبطة بهذا الحساب بعد.</CardContent></Card>}</section>
+      <section className="space-y-4"><div className="flex items-center gap-2"><ClipboardList className="h-5 w-5 text-primary" /><h2 className="text-2xl font-black">بلاغاتي</h2></div>{reportsQuery.isLoading ? <p className="text-muted-foreground">جارٍ تحميل البلاغات…</p> : reportsQuery.error ? <p className="text-destructive">تعذر تحميل البلاغات حاليًا.</p> : reportsQuery.data?.length ? <div className="grid gap-3">{reportsQuery.data.map(report => <Card key={report.id}><CardContent className="p-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-bold">{report.title}</p><p className="text-sm text-muted-foreground">رقم البلاغ #{report.id} · {new Date(report.createdAt).toLocaleDateString("ar-SA")}</p>{report.reviewReason && <p className="mt-1 text-xs text-muted-foreground">ملاحظة المراجعة: {report.reviewReason}</p>}</div><span className="w-fit rounded-full bg-secondary px-3 py-1 text-sm font-bold">{statusLabels[report.status] ?? report.status}</span></div>{report.status === "closed" && <ReportRating reportId={report.id} />}</CardContent></Card>)}</div> : <Card><CardContent className="p-6 text-center text-muted-foreground">لا توجد بلاغات مرتبطة بهذا الحساب بعد.</CardContent></Card>}</section>
     </main>
   </PublicShell>;
 }

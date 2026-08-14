@@ -1,13 +1,25 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { addReportEvent, attachReportEvidence, createNotification, createReport, getReportById, getReportKpiData, listOperationalReports, listReportsForUser, updateReportStatus } from "../db";
+import { addReportEvent, attachReportEvidence, createNotification, createReport, getReportById, getReportKpiData, getReportRating, listOperationalReports, listReportsForUser, updateReportStatus, upsertReportRating } from "../db";
 import { calculateReportKpis } from "../reportKpis";
 import { storagePut } from "../storage";
 import { protectedProcedure, router } from "../_core/trpc";
-import { evidenceContentTypes, isEvidenceSizeAllowed, isSupportedEvidenceType, canTransitionReport, isOperationalRole, filterQueueForRole } from "../reportWorkflow";
+import { evidenceContentTypes, isEvidenceSizeAllowed, isSupportedEvidenceType, canCitizenRateReport, canTransitionReport, isOperationalRole, filterQueueForRole } from "../reportWorkflow";
 
 const statusValues = ["draft", "submitted", "review", "needs_info", "rejected", "assigned", "in_progress", "awaiting_approval", "closed", "reopened"] as const;
 const statusSchema = z.enum(statusValues);
+const statusLabels: Record<(typeof statusValues)[number], string> = {
+  draft: "مسودة",
+  submitted: "مرسل",
+  review: "قيد المراجعة",
+  needs_info: "بحاجة إلى معلومات إضافية",
+  rejected: "مرفوض بسبب موثق",
+  assigned: "مسند",
+  in_progress: "قيد التنفيذ",
+  awaiting_approval: "بانتظار الاعتماد",
+  closed: "مغلق",
+  reopened: "معاد فتحه",
+};
 
 function requireRole(role: string, allowed: readonly string[]) {
   if (!allowed.includes(role)) throw new TRPCError({ code: "FORBIDDEN", message: "لا تملك صلاحية لهذا الإجراء" });
@@ -32,6 +44,24 @@ export const reportsRouter = router({
     }),
 
   mine: protectedProcedure.query(({ ctx }) => listReportsForUser(ctx.user.id)),
+
+  rating: protectedProcedure
+    .input(z.object({ reportId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const report = await getReportById(input.reportId);
+      if (!report || report.reporterId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN", message: "لا تملك صلاحية عرض هذا التقييم" });
+      return getReportRating(input.reportId, ctx.user.id);
+    }),
+
+  rate: protectedProcedure
+    .input(z.object({ reportId: z.number().int().positive(), rating: z.number().int().min(1).max(5), comment: z.string().trim().max(1000).optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const report = await getReportById(input.reportId);
+      if (!report || !canCitizenRateReport(report.status, report.reporterId, ctx.user.id)) {
+        throw new TRPCError({ code: report ? "BAD_REQUEST" : "FORBIDDEN", message: report?.reporterId === ctx.user.id ? "يمكن تقييم البلاغ بعد إغلاقه فقط" : "لا تملك صلاحية تقييم هذا البلاغ" });
+      }
+      return upsertReportRating({ reportId: input.reportId, citizenId: ctx.user.id, rating: input.rating, comment: input.comment ?? null });
+    }),
 
   queue: protectedProcedure.query(async ({ ctx }) => {
     requireRole(ctx.user.role, ["staff", "field", "supervisor", "admin"]);
@@ -89,6 +119,10 @@ export const reportsRouter = router({
       note: z.string().trim().max(2000).optional(),
       assignedToId: z.number().int().positive().nullable().optional(),
       evidenceUrl: z.string().url().max(2000).nullable().optional(),
+    }).superRefine((input, refinement) => {
+      if ((input.toStatus === "needs_info" || input.toStatus === "rejected") && !input.note) {
+        refinement.addIssue({ code: z.ZodIssueCode.custom, path: ["note"], message: "يجب توثيق سبب طلب المعلومات أو الرفض" });
+      }
     }))
     .mutation(async ({ ctx, input }) => {
       requireRole(ctx.user.role, ["staff", "field", "supervisor", "admin"]);
@@ -98,9 +132,9 @@ export const reportsRouter = router({
       if (!canTransitionReport(role, current.status, input.toStatus, current.assignedToId, ctx.user.id)) {
         throw new TRPCError({ code: "FORBIDDEN", message: "هذا الدور لا يستطيع تنفيذ هذا التحول" });
       }
-      const updated = await updateReportStatus(input.id, input.toStatus, input.assignedToId, input.evidenceUrl);
+      const updated = await updateReportStatus(input.id, input.toStatus, input.assignedToId, input.evidenceUrl, input.note ?? null);
       await addReportEvent({ reportId: input.id, actorId: ctx.user.id, fromStatus: current.status, toStatus: input.toStatus, note: input.note, evidenceUrl: input.evidenceUrl });
-      await createNotification({ userId: current.reporterId, kind: "report", title: "تحديث حالة البلاغ", body: `تغيرت حالة البلاغ «${current.title}» إلى «${input.toStatus}».`, href: "/reports", sourceType: "report", sourceId: current.id });
+      await createNotification({ userId: current.reporterId, kind: "report", title: "تحديث حالة البلاغ", body: `تغيرت حالة البلاغ «${current.title}» إلى «${statusLabels[input.toStatus]}».${input.note ? ` السبب: ${input.note}` : ""}`, href: "/reports", sourceType: "report", sourceId: current.id });
       if (input.assignedToId && input.assignedToId !== current.reporterId && input.assignedToId !== ctx.user.id) {
         await createNotification({ userId: input.assignedToId, kind: "report", title: "أُسند إليك بلاغ", body: `تم إسناد البلاغ «${current.title}» إلى حسابك للمراجعة أو المتابعة.`, href: "/ops/reports", sourceType: "report", sourceId: current.id });
       }

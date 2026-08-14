@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/mysql2";
-import { and, desc, eq, inArray, isNull, or } from "drizzle-orm";
-import { InsertReport, InsertReportEvent, InsertUser, Report, ReportEvent, reportEvents, reports, users, InsertProvider, Provider, providers, providerMembers, ProviderProduct, InsertProviderProduct, providerProducts, ProviderService, InsertProviderService, providerServices, providerAuditEvents, InsertProviderAuditEvent, ProviderMember, InsertNotification, Notification, notifications, CheckoutHandoff, InsertCheckoutHandoff, checkoutHandoffs } from "../drizzle/schema";
+import { and, desc, eq, inArray, isNull, not, or } from "drizzle-orm";
+import { InsertReport, InsertReportEvent, InsertUser, Report, ReportEvent, reportEvents, reports, users, InsertProvider, Provider, providers, providerMembers, ProviderProduct, InsertProviderProduct, providerProducts, ProviderService, InsertProviderService, providerServices, providerAuditEvents, InsertProviderAuditEvent, ProviderMember, InsertNotification, Notification, notifications, CheckoutHandoff, InsertCheckoutHandoff, checkoutHandoffs, ReportRating, InsertReportRating, reportRatings } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -138,7 +138,7 @@ export async function listReportsForUser(userId: number): Promise<Report[]> {
 export async function listOperationalReports(userId: number): Promise<Report[]> {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(reports).where(or(eq(reports.assignedToId, userId), eq(reports.status, "submitted"))).orderBy(desc(reports.createdAt));
+  return db.select().from(reports).where(or(eq(reports.assignedToId, userId), not(eq(reports.status, "closed")))).orderBy(desc(reports.createdAt));
 }
 
 export async function getReportKpiData(): Promise<{ reports: Report[]; events: ReportEvent[] }> {
@@ -158,12 +158,13 @@ export async function getReportById(id: number): Promise<Report | undefined> {
   return rows[0];
 }
 
-export async function updateReportStatus(id: number, status: Report["status"], assignedToId?: number | null, evidenceUrl?: string | null) {
+export async function updateReportStatus(id: number, status: Report["status"], assignedToId?: number | null, evidenceUrl?: string | null, reviewReason?: string | null) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
   const update: Partial<Report> = { status };
   if (assignedToId !== undefined) update.assignedToId = assignedToId;
   if (evidenceUrl !== undefined) update.evidenceUrl = evidenceUrl;
+  if (reviewReason !== undefined) update.reviewReason = reviewReason;
   await db.update(reports).set(update).where(eq(reports.id, id));
   return getReportById(id);
 }
@@ -179,6 +180,24 @@ export async function addReportEvent(input: InsertReportEvent) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
   await db.insert(reportEvents).values(input);
+}
+
+export async function getReportRating(reportId: number, citizenId: number): Promise<ReportRating | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(reportRatings).where(and(eq(reportRatings.reportId, reportId), eq(reportRatings.citizenId, citizenId))).limit(1);
+  return rows[0];
+}
+
+export async function upsertReportRating(input: InsertReportRating): Promise<ReportRating> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.insert(reportRatings).values(input).onDuplicateKeyUpdate({
+    set: { rating: input.rating, comment: input.comment ?? null, updatedAt: new Date() },
+  });
+  const rows = await db.select().from(reportRatings).where(and(eq(reportRatings.reportId, input.reportId), eq(reportRatings.citizenId, input.citizenId))).limit(1);
+  if (!rows[0]) throw new Error("Report rating was not saved");
+  return rows[0];
 }
 
 export async function createProvider(input: InsertProvider): Promise<Provider> {
