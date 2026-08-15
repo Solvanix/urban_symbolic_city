@@ -100,8 +100,8 @@ export const reportsRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "الفترة الزمنية غير صالحة" });
       }
       const data = await getReportKpiData();
-      const filtered = filterReportKpiData(data.reports, data.events, input);
-      return calculateReportKpis(filtered.reports, filtered.events);
+      const filtered = filterReportKpiData(data.reports, data.events, input, data.ratings);
+      return calculateReportKpis(filtered.reports, filtered.events, undefined, filtered.ratings);
     }),
 
   byId: protectedProcedure

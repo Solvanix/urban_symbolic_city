@@ -141,14 +141,15 @@ export async function listOperationalReports(userId: number): Promise<Report[]> 
   return db.select().from(reports).where(or(eq(reports.assignedToId, userId), not(eq(reports.status, "closed")))).orderBy(desc(reports.createdAt));
 }
 
-export async function getReportKpiData(): Promise<{ reports: Report[]; events: ReportEvent[] }> {
+export async function getReportKpiData(): Promise<{ reports: Report[]; events: ReportEvent[]; ratings: ReportRating[] }> {
   const db = await getDb();
-  if (!db) return { reports: [], events: [] };
-  const [reportRows, eventRows] = await Promise.all([
+  if (!db) return { reports: [], events: [], ratings: [] };
+  const [reportRows, eventRows, ratingRows] = await Promise.all([
     db.select().from(reports).orderBy(desc(reports.createdAt)),
     db.select().from(reportEvents).orderBy(desc(reportEvents.createdAt)),
+    db.select().from(reportRatings).orderBy(desc(reportRatings.createdAt)),
   ]);
-  return { reports: reportRows, events: eventRows };
+  return { reports: reportRows, events: eventRows, ratings: ratingRows };
 }
 
 export async function getReportById(id: number): Promise<Report | undefined> {

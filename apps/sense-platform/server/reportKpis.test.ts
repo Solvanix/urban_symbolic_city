@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { calculateReportKpis, filterReportKpiData } from "./reportKpis";
-import type { Report, ReportEvent } from "../drizzle/schema";
+import type { Report, ReportEvent, ReportRating } from "../drizzle/schema";
 
 const report = (overrides: Partial<Report>): Report => ({
   id: 1,
@@ -53,7 +53,8 @@ describe("calculateReportKpis", () => {
     expect(result.evidenceRate).toBe(25);
     expect(result.reopenRate).toBe(25);
     expect(result.p90ClosureHours).toBe(20);
-    expect(result.unavailable).toContain("تقييم المستخدم");
+    expect(result.averageUserRating).toBeNull();
+    expect(result.unavailable).toContain("حوادث الصلاحيات");
   });
 
   it("filters KPI data by category and inclusive date range", () => {
@@ -66,6 +67,15 @@ describe("calculateReportKpis", () => {
     const filtered = filterReportKpiData(reports, events, { category: "accessibility", startAt: new Date("2026-08-09T00:00:00Z").getTime(), endAt: new Date("2026-08-15T23:59:59Z").getTime() });
     expect(filtered.reports.map(item => item.id)).toEqual([1]);
     expect(filtered.events.map(item => item.reportId)).toEqual([1]);
+  });
+
+  it("calculates the average citizen rating only for selected reports", () => {
+    const ratings: ReportRating[] = [
+      { id: 1, reportId: 1, citizenId: 10, rating: 5, comment: null, createdAt: new Date(), updatedAt: new Date() },
+      { id: 2, reportId: 2, citizenId: 11, rating: 3, comment: null, createdAt: new Date(), updatedAt: new Date() },
+    ];
+    const result = calculateReportKpis([report({ id: 1 }), report({ id: 2 })], [], new Date("2026-08-15T00:00:00Z"), ratings);
+    expect(result.averageUserRating).toBe(4);
   });
 
   it("returns null P90 and zero rates for an empty dataset", () => {
