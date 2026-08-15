@@ -41,12 +41,12 @@ export default function Store() {
         <section className="blueprint-grid relative overflow-hidden bg-[#071d49] px-5 py-20 text-white md:px-10">
           <div className="container relative z-10 grid gap-10 lg:grid-cols-[1fr_0.8fr] lg:items-end">
             <div>
-              <p className="mb-4 font-mono text-xs uppercase tracking-[0.22em] text-[#ffd23f]">SENSE / ACCESS MARKET</p>
-              <h1 className="max-w-3xl text-5xl font-black leading-[1.05] md:text-7xl">منتجات تساعدك على السفر بثقة.</h1>
-              <p className="mt-6 max-w-2xl text-lg leading-9 text-blue-100">اختيارات عملية من مزودين محليين، مصممة لتكمل رحلتك وتدعم احتياجات الوصول المختلفة.</p>
+              <p className="mb-4 font-mono text-xs uppercase tracking-[0.22em] text-[#ffd23f]">SENSE / المتجر الداخلي</p>
+              <h1 className="max-w-3xl text-5xl font-black leading-[1.05] md:text-7xl">منتجات وخدمات مرتبطة بالرحلة.</h1>
+              <p className="mt-6 max-w-2xl text-lg leading-9 text-blue-100">تصفح المنتجات المدرجة في كتالوج SENSE، وراجع الوصف والسعر والتوفر قبل إضافتها إلى السلة.</p>
             </div>
             <div className="cad-frame bg-[#0b2d63]/70 p-6">
-              <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#ffd23f]">CART STATUS</p>
+              <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#ffd23f]">حالة السلة</p>
               <p className="mt-4 text-4xl font-black">{itemCount}</p>
               <p className="text-blue-100">عنصر في سلتك</p>
               <Button className="mt-6 w-full bg-[#ffd23f] text-[#08204c] hover:bg-[#ffe47b]" onClick={openCart}>
@@ -59,13 +59,13 @@ export default function Store() {
         <section className="container py-14">
           <div className="mb-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#1f67ac]">CURATED FOR YOUR JOURNEY</p>
-              <h2 className="mt-2 text-3xl font-black md:text-4xl">اختيارات مبنية على احتياجك</h2>
+              <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#1f67ac]">كتالوج SENSE</p>
+              <h2 className="mt-2 text-3xl font-black md:text-4xl">ابحث في المنتجات المتاحة</h2>
             </div>
             <div className="flex w-full max-w-xl flex-col gap-3 md:flex-row">
               <Input value={search} onChange={event => setSearch(event.target.value)} placeholder="ابحث عن منتج أو فئة" className="bg-white" aria-label="البحث في المنتجات" />
               <select value={filter} onChange={event => setFilter(event.target.value)} className="h-10 border border-[#c7d7ea] bg-white px-3 text-sm" aria-label="تصفية المنتجات حسب الاستخدام أو الفئة">
-                <option value="all">كل الاستخدامات والفئات</option>
+                <option value="all">كل الفئات والاستخدامات</option>
                 {filterOptions.map(option => <option key={option} value={option}>{option}</option>)}
               </select>
               <Button variant="outline" onClick={() => { setSearch(""); setFilter("all"); }}>مسح</Button>
@@ -86,10 +86,10 @@ export default function Store() {
                     {image ? <img src={image.url} alt={image.altText ?? product.title} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-[#1f67ac]"><ShoppingBag className="size-12" /></div>}
                   </div>
                   <CardContent className="p-6">
-                    <p className="font-mono text-xs uppercase tracking-[0.14em] text-[#1f67ac]">{product.productType ?? "SENSE MARKET"}</p>
+                    <p className="font-mono text-xs uppercase tracking-[0.14em] text-[#1f67ac]">{product.productType ?? "منتج من كتالوج SENSE"}</p>
                     <h3 className="mt-2 text-2xl font-black">{product.title}</h3>
                     <Link href={`/store/${product.handle}`} className="mt-2 inline-block text-sm font-bold text-[#1f67ac]">عرض التفاصيل ←</Link>
-                    <p className="mt-3 min-h-14 text-sm leading-7 text-slate-600">{product.description || "منتج مختار بعناية لاحتياجات السفر والوصول."}</p>
+                    <p className="mt-3 min-h-14 text-sm leading-7 text-slate-600">{product.description || "لا يوجد وصف منشور لهذا المنتج بعد."}</p>
                     <div className="mt-6 flex items-center justify-between gap-3">
                       <strong className="text-lg">{currency.format(Number(product.priceRange.min.amount))}</strong>
                       <Button disabled={!variant?.availableForSale || loading} onClick={() => variant && addItem(variant.id)} className="bg-[#09244f] hover:bg-[#123c78]">
@@ -113,11 +113,11 @@ export default function Store() {
           <div className="fixed inset-0 z-50 flex justify-end bg-[#061936]/55 p-4" role="dialog" aria-modal="true" aria-label="سلة التسوق">
             <div className="flex h-full w-full max-w-lg flex-col bg-white p-6 text-[#09244f] shadow-2xl">
               <div className="flex items-center justify-between border-b border-[#d6e1ef] pb-5">
-                <div><p className="font-mono text-xs uppercase tracking-[0.16em] text-[#1f67ac]">YOUR CART</p><h2 className="mt-1 text-2xl font-black">سلة رحلتك</h2></div>
+                <div><p className="font-mono text-xs uppercase tracking-[0.16em] text-[#1f67ac]">سلة SENSE</p><h2 className="mt-1 text-2xl font-black">سلة رحلتك</h2></div>
                 <Button variant="ghost" size="icon" onClick={closeCart} aria-label="إغلاق السلة"><X /></Button>
               </div>
               {!cart || cart.items.length === 0 ? (
-                <div className="flex flex-1 flex-col items-center justify-center text-center"><ShoppingCart className="mb-4 size-12 text-[#1f67ac]" /><p className="font-bold">السلة فارغة</p><p className="mt-2 text-sm text-slate-600">أضف منتجًا مناسبًا لاحتياجات رحلتك.</p></div>
+                <div className="flex flex-1 flex-col items-center justify-center text-center"><ShoppingCart className="mb-4 size-12 text-[#1f67ac]" /><p className="font-bold">السلة فارغة</p><p className="mt-2 text-sm text-slate-600">أضف المنتجات التي تريد طلبها إلى السلة.</p></div>
               ) : (
                 <>
                   <div className="flex-1 space-y-4 overflow-y-auto py-6">

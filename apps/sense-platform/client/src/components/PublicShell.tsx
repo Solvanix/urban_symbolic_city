@@ -10,7 +10,7 @@ const navItems = [
   { href: "/services", label: "الخدمات" },
   { href: "/tourism", label: "السياحة" },
   { href: "/market", label: "السوق المحلي" },
-  { href: "/shop", label: "المتجر" },
+  { href: "/store", label: "المتجر" },
   { href: "/about", label: "عن SENSE" },
 ];
 
@@ -43,7 +43,7 @@ export default function PublicShell({ children }: { children: React.ReactNode })
           </nav>
           <div className="hidden items-center gap-2 lg:flex">
             <Link href="/notifications" className="focus-ring grid h-10 w-10 place-items-center text-[#456283] hover:text-[#1355a3]" aria-label="الإشعارات"><Bell size={18} /></Link>
-            <Link href="/shop/cart" className="focus-ring grid h-10 w-10 place-items-center text-[#456283] hover:text-[#1355a3]" aria-label="السلة"><ShoppingBag size={18} /></Link>
+            <Link href="/store" className="focus-ring grid h-10 w-10 place-items-center text-[#456283] hover:text-[#1355a3]" aria-label="السلة"><ShoppingBag size={18} /></Link>
             {user ? <Link href="/dashboard"><Button className="bg-[#071b42] text-white hover:bg-[#12336e]">لوحة التحكم <ArrowLeft size={16} /></Button></Link> : <Button onClick={() => startLogin()} className="bg-[#1355a3] text-white hover:bg-[#0e4387]">دخول المنصة <ArrowLeft size={16} /></Button>}
           </div>
           <button className="focus-ring grid h-10 w-10 place-items-center lg:hidden" onClick={() => setOpen(v => !v)} aria-label={open ? "إغلاق القائمة" : "فتح القائمة"}>{open ? <X /> : <Menu />}</button>
@@ -57,7 +57,7 @@ export default function PublicShell({ children }: { children: React.ReactNode })
       <footer className="sense-grid mt-20 text-white">
         <div className="container grid gap-10 py-14 md:grid-cols-[1.2fr_.8fr_.8fr]">
           <div><div className="mb-4 text-2xl font-black tracking-[.2em] text-[#f5c542]">SENSE</div><p className="max-w-sm leading-8 text-white/70">منصة حضرية تجمع البلاغات، الخدمات، السوق المحلي، والذكاء الاصطناعي في تجربة واحدة أكثر وضوحًا.</p></div>
-          <div><div className="mb-4 font-black">روابط سريعة</div><div className="grid gap-3 text-sm text-white/70"><Link href="/report/new">أرسل بلاغًا</Link><Link href="/services">الخدمات البلدية</Link><Link href="/shop">تصفح المتجر</Link></div></div>
+          <div><div className="mb-4 font-black">روابط سريعة</div><div className="grid gap-3 text-sm text-white/70"><Link href="/report/new">أرسل بلاغًا</Link><Link href="/services">الخدمات البلدية</Link><Link href="/store">تصفح المتجر</Link></div></div>
           <div><div className="mb-4 font-black">تواصل معنا</div><p className="text-sm leading-7 text-white/70">فريق SENSE جاهز لمساعدة المدن والجهات المحلية على بناء خدمات أكثر استجابة.</p><Link href="/contact" className="mt-3 inline-block font-bold text-[#f5c542]">تحدث مع الفريق ←</Link></div>
         </div>
         <div className="border-t border-white/10 py-5 text-center text-xs text-white/50">© 2026 SENSE Urban Platform — جميع الحقوق محفوظة</div>

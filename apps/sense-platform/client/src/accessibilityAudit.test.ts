@@ -31,4 +31,19 @@ describe("Arabic accessibility contract", () => {
     expect(directory).toContain("const destinations: VerifiedDestination[] = [];");
     expect(directory).toContain("لا توجد وجهات موثقة منشورة بعد");
   });
+
+  it("describes the current product boundaries in practical Arabic", () => {
+    const home = read("pages/Home.tsx");
+    expect(home).toContain("SENSE منصة تجمع الوجهات والخدمات والمنتجات ومزوديها");
+    expect(home).toContain("المتجر الداخلي");
+    expect(home).toContain("التطبيقات الأصلية للهاتف مرحلة لاحقة وليست منشورة ضمن هذه النسخة");
+    expect(home).not.toContain("اكتشف العالم\nبطريقتك");
+  });
+
+  it("labels the directory as a source-aware listing", () => {
+    const directory = read("pages/PublicDirectory.tsx");
+    expect(directory).toContain("بيانات منشورة وفق حالة التحقق");
+    expect(directory).toContain("راجع تاريخ التحقق والمصدر قبل الزيارة");
+    expect(directory).not.toContain("وجهات تستقبلك بوضوح");
+  });
 });
