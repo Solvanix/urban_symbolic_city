@@ -28,3 +28,19 @@ describe("SENSE RBAC policy", () => {
     expect(canProviderMember("finance_viewer", "manage_content")).toBe(false);
   });
 });
+
+
+import { rbacManifest, rbacManifestProcedureNames } from "./rbacManifest";
+
+describe("RBAC procedure manifest", () => {
+  it("documents every sensitive procedure with a non-public requirement", () => {
+    const expected = [
+      "reports.create", "reports.mine", "reports.rating", "reports.rate", "reports.queue", "reports.nearby",
+      "reports.kpis", "reports.byId", "reports.uploadEvidence", "reports.transition", "commerce.checkout.recordHandoff",
+      "commerce.checkout.mine", "notifications.mine", "notifications.markRead", "notifications.markAllRead",
+      "ai.classifyReport", "providers.mine", "providers.create", "providers.get", "providers.adminReviewQueue", "providers.adminReview",
+    ];
+    expect(rbacManifestProcedureNames).toEqual(expected);
+    expect(rbacManifest.every(entry => entry.requirement !== "public")).toBe(true);
+  });
+});
