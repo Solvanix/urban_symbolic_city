@@ -4,7 +4,7 @@ import { addReportEvent, attachReportEvidence, createNotification, createReport,
 import { calculateReportKpis } from "../reportKpis";
 import { storagePut } from "../storage";
 import { protectedProcedure, router } from "../_core/trpc";
-import { evidenceContentTypes, isEvidenceSizeAllowed, isSupportedEvidenceType, canCitizenRateReport, canTransitionReport, isOperationalRole, filterQueueForRole } from "../reportWorkflow";
+import { evidenceContentTypes, isEvidenceSizeAllowed, isSupportedEvidenceType, canCitizenRateReport, canTransitionReport, isOperationalRole, filterQueueForRole, filterNearbyReportsForRole, isNearbyRadiusAllowed } from "../reportWorkflow";
 
 const statusValues = ["draft", "submitted", "review", "needs_info", "rejected", "assigned", "in_progress", "awaiting_approval", "closed", "reopened"] as const;
 const statusSchema = z.enum(statusValues);
@@ -82,6 +82,15 @@ export const reportsRouter = router({
     const reports = await listOperationalReports(ctx.user.id);
     return filterQueueForRole(ctx.user.role, ctx.user.id, reports);
   }),
+
+  nearby: protectedProcedure
+    .input(z.object({ latitude: z.number().min(-90).max(90), longitude: z.number().min(-180).max(180), radiusKm: z.number().positive().max(50).default(5) }))
+    .query(async ({ ctx, input }) => {
+      requireRole(ctx.user.role, ["staff", "field", "supervisor", "admin"]);
+      if (!isNearbyRadiusAllowed(input.radiusKm)) throw new TRPCError({ code: "BAD_REQUEST", message: "نطاق البحث غير صالح" });
+      const reports = await listOperationalReports(ctx.user.id);
+      return filterNearbyReportsForRole(ctx.user.role, ctx.user.id, reports, input.latitude, input.longitude, input.radiusKm);
+    }),
 
   kpis: protectedProcedure.query(async ({ ctx }) => {
     requireRole(ctx.user.role, ["supervisor", "admin"]);

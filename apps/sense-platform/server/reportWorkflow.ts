@@ -72,3 +72,23 @@ export function filterQueueForRole<T extends QueueReport>(role: string, userId: 
   if (role === "staff") return reports.filter((report) => ["submitted", "review", "reopened"].includes(report.status));
   return [];
 }
+
+export function isNearbyRadiusAllowed(radiusKm: number) {
+  return Number.isFinite(radiusKm) && radiusKm > 0 && radiusKm <= 50;
+}
+
+export function filterNearbyReportsForRole<T extends QueueReport & { latitude?: string | null; longitude?: string | null }>(role: string, userId: number, reports: T[], latitude: number, longitude: number, radiusKm: number): T[] {
+  const scoped = filterQueueForRole(role, userId, reports).filter((report) => report.status !== "closed");
+  const earthRadiusKm = 6371;
+  const toRadians = (value: number) => value * Math.PI / 180;
+  return scoped.filter((report) => {
+    const reportLatitude = Number(report.latitude);
+    const reportLongitude = Number(report.longitude);
+    if (!Number.isFinite(reportLatitude) || !Number.isFinite(reportLongitude)) return false;
+    const dLat = toRadians(reportLatitude - latitude);
+    const dLon = toRadians(reportLongitude - longitude);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRadians(latitude)) * Math.cos(toRadians(reportLatitude)) * Math.sin(dLon / 2) ** 2;
+    const distanceKm = earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return distanceKm <= radiusKm;
+  });
+}
