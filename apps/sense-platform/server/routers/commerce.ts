@@ -20,7 +20,7 @@ import {
   updateCartLines,
 } from "../_core/shopify";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
-import { createCheckoutHandoff, createNotification, listCheckoutHandoffsForUser } from "../db";
+import { createCheckoutHandoff, createNotification, getCheckoutHandoffForUser, listCheckoutHandoffsForUser } from "../db";
 
 const cartLineInputSchema = z.object({
   variantId: z.string().min(1),
@@ -76,6 +76,9 @@ export const commerceRouter = router({
         return handoff;
       }),
     mine: protectedProcedure.query(({ ctx }) => listCheckoutHandoffsForUser(ctx.user.id)),
+    byId: protectedProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .query(async ({ ctx, input }) => getCheckoutHandoffForUser(ctx.user.id, input.id)),
   }),
   cart: router({
     create: publicProcedure

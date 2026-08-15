@@ -21,6 +21,7 @@ import RoleDashboard from "./pages/RoleDashboard";
 import ProviderDetail from "./pages/ProviderDetail";
 import ReportAssistant from "./pages/ReportAssistant";
 import Orders from "./pages/Orders";
+import OrderDetail from "./pages/OrderDetail";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/notifications" component={Notifications} />
       <Route path="/dashboard" component={RoleDashboard} />
       <Route path="/ai-assistant" component={ReportAssistant} />
+      <Route path="/orders/:id" component={OrderDetail} />
       <Route path="/orders" component={Orders} />
       <Route path="/about" component={InfoPage} />
       <Route path="/help" component={InfoPage} />

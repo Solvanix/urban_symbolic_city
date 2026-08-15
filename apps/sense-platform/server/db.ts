@@ -387,3 +387,14 @@ export async function listCheckoutHandoffsForUser(userId: number): Promise<Check
   return db.select().from(checkoutHandoffs).where(eq(checkoutHandoffs.userId, userId)).orderBy(desc(checkoutHandoffs.createdAt));
 }
 
+
+export async function getCheckoutHandoffForUser(userId: number, handoffId: number): Promise<CheckoutHandoff | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(checkoutHandoffs)
+    .where(and(eq(checkoutHandoffs.id, handoffId), eq(checkoutHandoffs.userId, userId)))
+    .limit(1);
+  return rows[0];
+}
