@@ -41,14 +41,14 @@ export default function Store() {
         <section className="blueprint-grid relative overflow-hidden bg-[#071d49] px-5 py-20 text-white md:px-10">
           <div className="container relative z-10 grid gap-10 lg:grid-cols-[1fr_0.8fr] lg:items-end">
             <div>
-              <p className="mb-4 font-mono text-xs uppercase tracking-[0.22em] text-[#ffd23f]">SENSE / المتجر الداخلي</p>
-              <h1 className="max-w-3xl text-5xl font-black leading-[1.05] md:text-7xl">منتجات وخدمات مرتبطة بالرحلة.</h1>
-              <p className="mt-6 max-w-2xl text-lg leading-9 text-blue-100">تصفح المنتجات المدرجة في كتالوج SENSE، وراجع الوصف والسعر والتوفر قبل إضافتها إلى السلة.</p>
+              <p className="mb-4 font-mono text-xs uppercase tracking-[0.22em] text-[#ffd23f]">SENSE / كتالوج المنتجات والطلبات</p>
+              <h1 className="max-w-3xl text-5xl font-black leading-[1.05] md:text-7xl">متجر داخلي تديره SENSE، لا صفحة إحالة.</h1>
+              <p className="mt-6 max-w-2xl text-lg leading-9 text-blue-100">هنا تُنشر المنتجات التي أضافها مزودو SENSE أو فريق الإدارة. راجع اسم المنتج ووصفه وسعره وتوفره، ثم أضفه إلى سلتك وأنشئ طلبًا داخل المنصة. الدفع والشحن لا يُعلنان مكتملين إلا بعد تفعيل الشريك المعتمد.</p>
             </div>
             <div className="cad-frame bg-[#0b2d63]/70 p-6">
-              <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#ffd23f]">حالة السلة</p>
+              <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#ffd23f]">حالة طلبك الأولية</p>
               <p className="mt-4 text-4xl font-black">{itemCount}</p>
-              <p className="text-blue-100">عنصر في سلتك</p>
+              <p className="text-blue-100">عنصر محفوظ في السلة</p>
               <Button className="mt-6 w-full bg-[#ffd23f] text-[#08204c] hover:bg-[#ffe47b]" onClick={openCart}>
                 <ShoppingCart className="ms-2 size-4" /> عرض السلة
               </Button>
@@ -59,22 +59,23 @@ export default function Store() {
         <section className="container py-14">
           <div className="mb-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#1f67ac]">كتالوج SENSE</p>
-              <h2 className="mt-2 text-3xl font-black md:text-4xl">ابحث في المنتجات المتاحة</h2>
+              <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#1f67ac]">ما هو منشور الآن</p>
+              <h2 className="mt-2 text-3xl font-black md:text-4xl">ابحث، راجع، ثم قرر قبل الإضافة</h2>
+              <p className="mt-3 max-w-2xl leading-8 text-slate-600">الكتالوج يعرض السجلات المنشورة فقط. إذا لم تجد ما تبحث عنه، فهذا يعني أن المنتج غير منشور أو أن بياناته لم تُعتمد بعد، وليس أن SENSE ستفترض توفره من مصدر آخر.</p>
             </div>
             <div className="flex w-full max-w-xl flex-col gap-3 md:flex-row">
-              <Input value={search} onChange={event => setSearch(event.target.value)} placeholder="ابحث عن منتج أو فئة" className="bg-white" aria-label="البحث في المنتجات" />
+              <Input value={search} onChange={event => setSearch(event.target.value)} placeholder="ابحث باسم المنتج أو الفئة أو الاستخدام" className="bg-white" aria-label="البحث في المنتجات" />
               <select value={filter} onChange={event => setFilter(event.target.value)} className="h-10 border border-[#c7d7ea] bg-white px-3 text-sm" aria-label="تصفية المنتجات حسب الاستخدام أو الفئة">
-                <option value="all">كل الفئات والاستخدامات</option>
+                <option value="all">كل المنتجات المنشورة</option>
                 {filterOptions.map(option => <option key={option} value={option}>{option}</option>)}
               </select>
-              <Button variant="outline" onClick={() => { setSearch(""); setFilter("all"); }}>مسح</Button>
+              <Button variant="outline" onClick={() => { setSearch(""); setFilter("all"); }}>إعادة التصفية</Button>
             </div>
           </div>
 
           {isLoading && <div className="flex items-center gap-3 py-20 text-[#1f67ac]"><Loader2 className="animate-spin" /> جارٍ تحميل المنتجات…</div>}
           {isError && <div className="border border-red-200 bg-red-50 p-6 text-red-800">تعذر تحميل المنتجات الآن. حاول مرة أخرى لاحقًا.</div>}
-          {!isLoading && !isError && products.length === 0 && <div className="border border-dashed border-[#9db0c8] bg-white p-12 text-center">لا توجد منتجات مطابقة لهذا البحث.</div>}
+          {!isLoading && !isError && products.length === 0 && <div className="border border-dashed border-[#9db0c8] bg-white p-12 text-center">لا توجد منتجات منشورة تطابق هذا البحث. جرّب كلمة أخرى أو راجع الفئات المتاحة.</div>}
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {products.map(product => {
@@ -88,12 +89,12 @@ export default function Store() {
                   <CardContent className="p-6">
                     <p className="font-mono text-xs uppercase tracking-[0.14em] text-[#1f67ac]">{product.productType ?? "منتج من كتالوج SENSE"}</p>
                     <h3 className="mt-2 text-2xl font-black">{product.title}</h3>
-                    <Link href={`/store/${product.handle}`} className="mt-2 inline-block text-sm font-bold text-[#1f67ac]">عرض التفاصيل ←</Link>
-                    <p className="mt-3 min-h-14 text-sm leading-7 text-slate-600">{product.description || "لا يوجد وصف منشور لهذا المنتج بعد."}</p>
+                    <Link href={`/store/${product.handle}`} className="mt-2 inline-block text-sm font-bold text-[#1f67ac]">راجع بيانات المنتج ←</Link>
+                    <p className="mt-3 min-h-14 text-sm leading-7 text-slate-600">{product.description || "لم يُنشر وصف كافٍ لهذا المنتج بعد؛ لا تعتمد عليه قبل اكتمال بيانات المزود."}</p>
                     <div className="mt-6 flex items-center justify-between gap-3">
                       <strong className="text-lg">{currency.format(Number(product.priceRange.min.amount))}</strong>
                       <Button disabled={!variant?.availableForSale || loading} onClick={() => variant && addItem(variant.id)} className="bg-[#09244f] hover:bg-[#123c78]">
-                        {loading ? <Loader2 className="animate-spin" /> : <>أضف للسلة <ArrowLeft className="me-2 size-4" /></>}
+                        {loading ? <Loader2 className="animate-spin" /> : <>أضف إلى السلة <ArrowLeft className="me-2 size-4" /></>}
                       </Button>
                     </div>
                   </CardContent>
@@ -104,7 +105,7 @@ export default function Store() {
 
           {cart && cart.items.length > 0 && (
             <aside className="mt-12 flex flex-col gap-4 border border-[#c7d7ea] bg-white p-5 md:flex-row md:items-center md:justify-between">
-              <div><p className="font-bold">سلتك جاهزة</p><p className="text-sm text-slate-600">{cart.itemCount} عناصر · {currency.format(Number(cart.total.amount))}</p></div>
+              <div><p className="font-bold">تم حفظ اختيارك في سلة SENSE</p><p className="text-sm text-slate-600">{cart.itemCount} عناصر · {currency.format(Number(cart.total.amount))} — راجع البيانات قبل إنشاء الطلب.</p></div>
               <div className="flex gap-3"><Button variant="outline" onClick={openCart}>مراجعة السلة</Button><Button onClick={proceedToCheckout} className="bg-[#ffd23f] text-[#08204c] hover:bg-[#ffe47b]">إتمام الطلب</Button></div>
             </aside>
           )}
@@ -113,11 +114,11 @@ export default function Store() {
           <div className="fixed inset-0 z-50 flex justify-end bg-[#061936]/55 p-4" role="dialog" aria-modal="true" aria-label="سلة التسوق">
             <div className="flex h-full w-full max-w-lg flex-col bg-white p-6 text-[#09244f] shadow-2xl">
               <div className="flex items-center justify-between border-b border-[#d6e1ef] pb-5">
-                <div><p className="font-mono text-xs uppercase tracking-[0.16em] text-[#1f67ac]">سلة SENSE</p><h2 className="mt-1 text-2xl font-black">سلة رحلتك</h2></div>
+                <div><p className="font-mono text-xs uppercase tracking-[0.16em] text-[#1f67ac]">طلب داخلي في SENSE</p><h2 className="mt-1 text-2xl font-black">راجع السلة قبل الإرسال</h2></div>
                 <Button variant="ghost" size="icon" onClick={closeCart} aria-label="إغلاق السلة"><X /></Button>
               </div>
               {!cart || cart.items.length === 0 ? (
-                <div className="flex flex-1 flex-col items-center justify-center text-center"><ShoppingCart className="mb-4 size-12 text-[#1f67ac]" /><p className="font-bold">السلة فارغة</p><p className="mt-2 text-sm text-slate-600">أضف المنتجات التي تريد طلبها إلى السلة.</p></div>
+                <div className="flex flex-1 flex-col items-center justify-center text-center"><ShoppingCart className="mb-4 size-12 text-[#1f67ac]" /><p className="font-bold">السلة فارغة</p><p className="mt-2 text-sm text-slate-600">أضف منتجًا منشورًا من الكتالوج، ثم أدخل بيانات الشحن في خطوة إتمام الطلب.</p></div>
               ) : (
                 <>
                   <div className="flex-1 space-y-4 overflow-y-auto py-6">
@@ -128,7 +129,7 @@ export default function Store() {
                       </div>
                     ))}
                   </div>
-                  <div className="border-t border-[#d6e1ef] pt-5"><div className="mb-4 flex justify-between text-lg font-black"><span>الإجمالي</span><span>{currency.format(Number(cart.total.amount))}</span></div><Button className="w-full bg-[#ffd23f] text-[#08204c] hover:bg-[#ffe47b]" onClick={proceedToCheckout}>الانتقال إلى إتمام الطلب</Button></div>
+                  <div className="border-t border-[#d6e1ef] pt-5"><div className="mb-4 flex justify-between text-lg font-black"><span>إجمالي السلة قبل الدفع</span><span>{currency.format(Number(cart.total.amount))}</span></div><Button className="w-full bg-[#ffd23f] text-[#08204c] hover:bg-[#ffe47b]" onClick={proceedToCheckout}>متابعة بيانات الطلب</Button></div>
                 </>
               )}
             </div>
