@@ -36,8 +36,8 @@ describe("RBAC procedure manifest", () => {
   it("documents every sensitive procedure with a non-public requirement", () => {
     const expected = [
       "reports.create", "reports.mine", "reports.rating", "reports.rate", "reports.queue", "reports.nearby",
-      "reports.kpis", "reports.byId", "reports.uploadEvidence", "reports.transition", "commerce.checkout.recordHandoff",
-      "commerce.checkout.mine", "commerce.checkout.adminHandoffs", "notifications.mine", "notifications.markRead", "notifications.markAllRead",
+      "reports.kpis", "reports.byId", "reports.uploadEvidence", "reports.transition", "commerce.checkout.createOrder",
+      "commerce.checkout.mine", "commerce.checkout.byId", "commerce.checkout.adminHandoffs", "commerce.checkout.updateInventory", "commerce.checkout.receiveStatusEvent", "notifications.mine", "notifications.markRead", "notifications.markAllRead",
       "ai.classifyReport", "ai.assistOperations", "ai.assistTripPlanning", "providers.mine", "providers.create", "providers.get", "providers.adminReviewQueue", "providers.adminReview",
     ];
     expect(rbacManifestProcedureNames).toEqual(expected);

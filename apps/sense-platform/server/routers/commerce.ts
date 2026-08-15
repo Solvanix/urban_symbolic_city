@@ -10,7 +10,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "../_core/trpc";
-import { addInternalCartLine, createInternalCart, createInternalOrderFromCart, getInternalCart, getInternalOrderForUser, getPublishedCommerceCatalogItemBySlug, listInternalOrdersForAdmin, listInternalOrdersForUser, listPublishedCommerceCatalog, removeInternalCartLine, updateInternalCartLine } from "../db";
+import { addInternalCartLine, createInternalCart, createInternalOrderFromCart, getInternalCart, getInternalOrderForUser, getPublishedCommerceCatalogItemBySlug, listInternalOrdersForAdmin, listInternalOrdersForUser, listPublishedCommerceCatalog, removeInternalCartLine, updateInternalCartLine, updateInternalCatalogInventory, updateInternalOrderStatus } from "../db";
 
 const cartLineInputSchema = z.object({
   variantId: z.string().min(1),
@@ -87,6 +87,31 @@ export const commerceRouter = router({
       .input(z.object({ id: z.number().int().positive() }))
       .query(async ({ ctx, input }) => getInternalOrderForUser(ctx.user.id, input.id)),
     adminHandoffs: adminProcedure.query(() => listInternalOrdersForAdmin()),
+    updateInventory: adminProcedure
+      .input(z.object({ catalogItemId: z.number().int().positive(), inventoryQuantity: z.number().int().nonnegative().nullable() }))
+      .mutation(async ({ input }) => {
+        const item = await updateInternalCatalogInventory(input);
+        if (!item) throw new TRPCError({ code: "NOT_FOUND", message: "عنصر الكتالوج غير موجود" });
+        return { item, availableForSale: item.inventoryQuantity === null || item.inventoryQuantity > 0 };
+      }),
+    receiveStatusEvent: adminProcedure
+      .input(z.object({
+        orderId: z.number().int().positive(),
+        status: z.enum(["pending_payment", "paid", "processing", "shipped", "delivered", "cancelled", "refunded", "requires_review"]),
+        paymentStatus: z.enum(["pending", "authorized", "paid", "failed", "refunded"]).optional(),
+        fulfillmentStatus: z.enum(["unfulfilled", "partial", "fulfilled", "cancelled"]).optional(),
+        externalPaymentReference: z.string().trim().max(255).nullable().optional(),
+        externalShipmentReference: z.string().trim().max(255).nullable().optional(),
+        externalEventId: z.string().trim().min(1).max(255),
+        provider: z.enum(["payment", "logistics", "store_sync", "software_partner"]),
+        eventType: z.string().trim().min(1).max(100),
+        payloadHash: z.string().trim().min(1).max(128),
+      }))
+      .mutation(async ({ input }) => {
+        const result = await updateInternalOrderStatus(input);
+        if (!result) throw new TRPCError({ code: "NOT_FOUND", message: "الطلب غير موجود" });
+        return result;
+      }),
   }),
   cart: router({
     create: publicProcedure

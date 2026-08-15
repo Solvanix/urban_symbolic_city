@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, inArray, isNull, not, or } from "drizzle-orm";
-import { InsertReport, InsertReportEvent, InsertUser, Report, ReportEvent, reportEvents, reports, users, InsertProvider, Provider, providers, providerMembers, ProviderProduct, InsertProviderProduct, providerProducts, ProviderService, InsertProviderService, providerServices, providerAuditEvents, InsertProviderAuditEvent, ProviderMember, InsertNotification, Notification, notifications, CheckoutHandoff, InsertCheckoutHandoff, checkoutHandoffs, ReportRating, InsertReportRating, reportRatings, commerceCatalogItems, CommerceCatalogItem, commerceCarts, commerceCartItems, commerceOrders, commerceOrderItems } from "../drizzle/schema";
+import { InsertReport, InsertReportEvent, InsertUser, Report, ReportEvent, reportEvents, reports, users, InsertProvider, Provider, providers, providerMembers, ProviderProduct, InsertProviderProduct, providerProducts, ProviderService, InsertProviderService, providerServices, providerAuditEvents, InsertProviderAuditEvent, ProviderMember, InsertNotification, Notification, notifications, CheckoutHandoff, InsertCheckoutHandoff, checkoutHandoffs, ReportRating, InsertReportRating, reportRatings, commerceCatalogItems, CommerceCatalogItem, commerceCarts, commerceCartItems, commerceOrders, commerceOrderItems, commerceIntegrationEvents } from "../drizzle/schema";
 import type { Cart } from "../shared/commerce/types";
 import { ENV } from './_core/env';
 
@@ -438,6 +438,15 @@ export async function listPublishedCommerceCatalog(input: { limit?: number; prov
     .limit(limit);
 }
 
+export async function updateInternalCatalogInventory(input: { catalogItemId: number; inventoryQuantity: number | null }) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.update(commerceCatalogItems).set({ inventoryQuantity: input.inventoryQuantity }).where(eq(commerceCatalogItems.id, input.catalogItemId));
+  if (!rows) return null;
+  const updated = await db.select().from(commerceCatalogItems).where(eq(commerceCatalogItems.id, input.catalogItemId)).limit(1);
+  return updated[0] ?? null;
+}
+
 export async function getPublishedCommerceCatalogItemBySlug(slug: string): Promise<CommerceCatalogItem | null> {
   const db = await getDb();
   if (!db) return null;
@@ -546,13 +555,21 @@ export async function createInternalOrderFromCart(input: { cartId: string; userI
       .where(and(eq(commerceCartItems.cartId, input.cartId), eq(commerceCatalogItems.status, "published")));
     if (!rows.length) return null;
     const currency = rows[0].item.currency;
+    const hasInsufficientStock = rows.some(({ line, item }) => item.inventoryQuantity !== null && item.inventoryQuantity < line.quantity);
+    if (hasInsufficientStock) return null;
     const subtotalMinor = rows.reduce((sum, row) => sum + row.item.priceMinor * row.line.quantity, 0);
     const orderNumber = `SENSE-${Date.now()}-${randomUUID().slice(0, 8).toUpperCase()}`;
     const [order] = await tx.insert(commerceOrders).values({ orderNumber, userId: input.userId, status: "pending_payment", paymentStatus: "pending", fulfillmentStatus: "unfulfilled", currency, subtotalMinor, shippingMinor: 0, totalMinor: subtotalMinor, shippingName: input.shippingName, shippingPhone: input.shippingPhone, shippingAddress: input.shippingAddress }).$returningId();
     for (const row of rows) {
       await tx.insert(commerceOrderItems).values({ orderId: order.id, catalogItemId: row.item.id, providerId: row.item.providerId, nameSnapshot: row.item.name, unitPriceMinor: row.item.priceMinor, quantity: row.line.quantity, totalMinor: row.item.priceMinor * row.line.quantity });
     }
+    for (const row of rows) {
+      if (row.item.inventoryQuantity !== null) {
+        await tx.update(commerceCatalogItems).set({ inventoryQuantity: row.item.inventoryQuantity - row.line.quantity }).where(eq(commerceCatalogItems.id, row.item.id));
+      }
+    }
     await tx.update(commerceCarts).set({ status: "converted" }).where(eq(commerceCarts.id, input.cartId));
+    await tx.insert(notifications).values({ userId: input.userId, kind: "order", title: "تم إنشاء طلب SENSE", body: `تم إنشاء الطلب ${orderNumber} وهو بانتظار تأكيد الدفع.`, href: `/orders/${order.id}`, sourceType: "order", sourceId: order.id });
     return { id: order.id, orderNumber };
   });
 }
@@ -569,6 +586,22 @@ export async function getInternalOrderForUser(userId: number, id: number) {
   if (!db) return null;
   const rows = await db.select().from(commerceOrders).where(and(eq(commerceOrders.userId, userId), eq(commerceOrders.id, id))).limit(1);
   return rows[0] ?? null;
+}
+
+export async function updateInternalOrderStatus(input: { orderId: number; status: "pending_payment" | "paid" | "processing" | "shipped" | "delivered" | "cancelled" | "refunded" | "requires_review"; paymentStatus?: "pending" | "authorized" | "paid" | "failed" | "refunded"; fulfillmentStatus?: "unfulfilled" | "partial" | "fulfilled" | "cancelled"; externalPaymentReference?: string | null; externalShipmentReference?: string | null; externalEventId: string; provider: "payment" | "logistics" | "store_sync" | "software_partner"; eventType: string; payloadHash: string }) {
+  const db = await getDb();
+  if (!db) return null;
+  const existing = await db.select().from(commerceIntegrationEvents).where(eq(commerceIntegrationEvents.externalEventId, input.externalEventId)).limit(1);
+  if (existing[0]) return { duplicate: true, order: null };
+  await db.insert(commerceIntegrationEvents).values({ orderId: input.orderId, provider: input.provider, eventType: input.eventType, externalEventId: input.externalEventId, payloadHash: input.payloadHash, status: "received", attemptCount: 1 });
+  const orderRows = await db.select().from(commerceOrders).where(eq(commerceOrders.id, input.orderId)).limit(1);
+  if (!orderRows[0]) return null;
+  const order = orderRows[0];
+  await db.update(commerceOrders).set({ status: input.status, paymentStatus: input.paymentStatus, fulfillmentStatus: input.fulfillmentStatus, externalPaymentReference: input.externalPaymentReference, externalShipmentReference: input.externalShipmentReference }).where(eq(commerceOrders.id, input.orderId));
+  await db.update(commerceIntegrationEvents).set({ status: "processed", processedAt: new Date() }).where(eq(commerceIntegrationEvents.externalEventId, input.externalEventId));
+  await db.insert(notifications).values({ userId: order.userId, kind: "order", title: "تحديث حالة الطلب", body: `تم تحديث الطلب ${order.orderNumber} إلى ${input.status}.`, href: `/orders/${order.id}`, sourceType: "order", sourceId: order.id });
+  const updatedOrderRows = await db.select().from(commerceOrders).where(eq(commerceOrders.id, input.orderId)).limit(1);
+  return { duplicate: false, order: updatedOrderRows[0] ?? null };
 }
 
 export async function listInternalOrdersForAdmin() {
