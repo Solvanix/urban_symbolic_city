@@ -1,10 +1,11 @@
-import { useRef } from "react";
-import { ArrowLeft, ClipboardCheck, RefreshCw, Upload } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, ClipboardCheck, MapPin, RefreshCw, Upload } from "lucide-react";
 import { Link } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MapView } from "@/components/Map";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
@@ -113,6 +114,14 @@ function EvidencePicker({
 
 export default function OperationsReports() {
   const queue = trpc.reports.queue.useQuery();
+  const [mapCenter, setMapCenter] = useState<{ latitude: number; longitude: number } | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const nearbyInput = useMemo(
+    () => (mapCenter ? { ...mapCenter, radiusKm: 10 } : { latitude: 0, longitude: 0, radiusKm: 10 }),
+    [mapCenter],
+  );
+  const nearby = trpc.reports.nearby.useQuery(nearbyInput, { enabled: Boolean(mapCenter) });
   const utils = trpc.useUtils();
   const uploadEvidence = trpc.reports.uploadEvidence.useMutation({
     onSuccess: () => {
@@ -128,6 +137,35 @@ export default function OperationsReports() {
     },
     onError: error => toast.error(error.message || "تعذر تحديث البلاغ"),
   });
+
+  useEffect(() => {
+    for (const marker of markersRef.current) marker.map = null;
+    markersRef.current = [];
+    if (!mapRef.current || !nearby.data) return;
+    for (const item of nearby.data) {
+      const latitude = Number(item.latitude);
+      const longitude = Number(item.longitude);
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue;
+      const marker = new google.maps.marker.AdvancedMarkerElement({
+        map: mapRef.current,
+        position: { lat: latitude, lng: longitude },
+        title: `بلاغ #${item.id}: ${item.title}`,
+      });
+      markersRef.current.push(marker);
+    }
+  }, [nearby.data]);
+
+  const locateForMap = () => {
+    if (!navigator.geolocation) {
+      toast.error("المتصفح لا يدعم تحديد الموقع؛ استخدم الخريطة من صفحة البلاغات لإدخال الإحداثيات.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      position => setMapCenter({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
+      () => toast.error("تعذر الحصول على موقعك. لم يتم إرسال موقعك إلى الخادم."),
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
+    );
+  };
 
   return (
     <DashboardLayout>
@@ -148,6 +186,31 @@ export default function OperationsReports() {
           <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground">قيد المراجعة</p><p className="mt-2 text-3xl font-black">{queue.data?.filter(item => item.status === "submitted" || item.status === "review").length ?? "—"}</p></CardContent></Card>
           <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground">بانتظار الاعتماد</p><p className="mt-2 text-3xl font-black">{queue.data?.filter(item => item.status === "awaiting_approval").length ?? "—"}</p></CardContent></Card>
         </div>
+
+        <Card>
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5 text-primary" />خريطة البلاغات القريبة</CardTitle>
+              <p className="mt-1 text-sm font-normal text-muted-foreground">لا تظهر العلامات إلا بعد منح الموقع وبحسب صلاحيات دورك؛ البلاغات المغلقة مستبعدة.</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={locateForMap} className="gap-2"><MapPin className="h-4 w-4" />استخدم موقعي</Button>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {!mapCenter ? (
+              <div className="rounded-xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">اضغط «استخدم موقعي» لبدء بحث قريب اختياري. لن يتم تحميل البلاغات القريبة قبل موافقتك.</div>
+            ) : (
+              <>
+                <MapView
+                  className="h-[360px] overflow-hidden rounded-xl"
+                  initialCenter={{ lat: mapCenter.latitude, lng: mapCenter.longitude }}
+                  initialZoom={12}
+                  onMapReady={map => { mapRef.current = map; }}
+                />
+                <p className="text-xs text-muted-foreground">{nearby.isLoading ? "جارٍ تحميل البلاغات القريبة…" : nearby.error ? "تعذر تحميل البلاغات القريبة لهذه الصلاحية." : `تظهر ${nearby.data?.length ?? 0} علامة ضمن نطاق 10 كلم.`}</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
