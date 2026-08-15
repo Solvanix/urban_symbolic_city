@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateReportKpis } from "./reportKpis";
+import { calculateReportKpis, filterReportKpiData } from "./reportKpis";
 import type { Report, ReportEvent } from "../drizzle/schema";
 
 const report = (overrides: Partial<Report>): Report => ({
@@ -54,6 +54,18 @@ describe("calculateReportKpis", () => {
     expect(result.reopenRate).toBe(25);
     expect(result.p90ClosureHours).toBe(20);
     expect(result.unavailable).toContain("تقييم المستخدم");
+  });
+
+  it("filters KPI data by category and inclusive date range", () => {
+    const reports = [
+      report({ id: 1, category: "accessibility", createdAt: new Date("2026-08-10T12:00:00Z") }),
+      report({ id: 2, category: "road", createdAt: new Date("2026-08-12T12:00:00Z") }),
+      report({ id: 3, category: "accessibility", createdAt: new Date("2026-08-20T12:00:00Z") }),
+    ];
+    const events = [event({ id: 1, reportId: 1 }), event({ id: 2, reportId: 2 })];
+    const filtered = filterReportKpiData(reports, events, { category: "accessibility", startAt: new Date("2026-08-09T00:00:00Z").getTime(), endAt: new Date("2026-08-15T23:59:59Z").getTime() });
+    expect(filtered.reports.map(item => item.id)).toEqual([1]);
+    expect(filtered.events.map(item => item.reportId)).toEqual([1]);
   });
 
   it("returns null P90 and zero rates for an empty dataset", () => {

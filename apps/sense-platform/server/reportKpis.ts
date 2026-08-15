@@ -1,5 +1,11 @@
 import type { Report, ReportEvent } from "../drizzle/schema";
 
+export type ReportKpiFilter = {
+  startAt?: number;
+  endAt?: number;
+  category?: string;
+};
+
 export type ReportKpiSnapshot = {
   total: number;
   newReports: number;
@@ -10,6 +16,18 @@ export type ReportKpiSnapshot = {
   p90ClosureHours: number | null;
   unavailable: string[];
 };
+
+export function filterReportKpiData(reports: Report[], events: ReportEvent[], filter: ReportKpiFilter = {}) {
+  const filteredReports = reports.filter(report => {
+    const createdAt = new Date(report.createdAt).getTime();
+    if (filter.startAt !== undefined && createdAt < filter.startAt) return false;
+    if (filter.endAt !== undefined && createdAt > filter.endAt) return false;
+    if (filter.category && report.category !== filter.category) return false;
+    return true;
+  });
+  const ids = new Set(filteredReports.map(report => report.id));
+  return { reports: filteredReports, events: events.filter(event => ids.has(event.reportId)) };
+}
 
 function percentile90(values: number[]) {
   if (values.length === 0) return null;

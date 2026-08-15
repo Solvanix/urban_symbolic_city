@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { addReportEvent, attachReportEvidence, createNotification, createReport, getReportById, getReportKpiData, getReportRating, listOperationalReports, listReportsForUser, updateReportStatus, upsertReportRating } from "../db";
-import { calculateReportKpis } from "../reportKpis";
+import { calculateReportKpis, filterReportKpiData } from "../reportKpis";
 import { storagePut } from "../storage";
 import { protectedProcedure, router } from "../_core/trpc";
 import { evidenceContentTypes, isEvidenceSizeAllowed, isSupportedEvidenceType, canCitizenRateReport, canTransitionReport, isOperationalRole, filterQueueForRole, filterNearbyReportsForRole, isNearbyRadiusAllowed } from "../reportWorkflow";
@@ -92,11 +92,17 @@ export const reportsRouter = router({
       return filterNearbyReportsForRole(ctx.user.role, ctx.user.id, reports, input.latitude, input.longitude, input.radiusKm);
     }),
 
-  kpis: protectedProcedure.query(async ({ ctx }) => {
-    requireRole(ctx.user.role, ["supervisor", "admin"]);
-    const data = await getReportKpiData();
-    return calculateReportKpis(data.reports, data.events);
-  }),
+  kpis: protectedProcedure
+    .input(z.object({ startAt: z.number().int().nonnegative().optional(), endAt: z.number().int().nonnegative().optional(), category: z.string().trim().max(120).optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      requireRole(ctx.user.role, ["supervisor", "admin"]);
+      if (input?.startAt !== undefined && input?.endAt !== undefined && input.startAt > input.endAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "الفترة الزمنية غير صالحة" });
+      }
+      const data = await getReportKpiData();
+      const filtered = filterReportKpiData(data.reports, data.events, input);
+      return calculateReportKpis(filtered.reports, filtered.events);
+    }),
 
   byId: protectedProcedure
     .input(z.object({ id: z.number().int().positive() }))
