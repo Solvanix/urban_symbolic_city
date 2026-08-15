@@ -10,3 +10,11 @@ describe("report assistant privacy", () => {
     expect(safe).toContain("[بيانات محجوبة]");
   });
 });
+
+import { assistTripPlanning } from "./aiAssistant";
+
+describe("trip planning assistant", () => {
+  it("rejects an empty stop set without calling the model", async () => {
+    await expect(assistTripPlanning({ accessNeeds: [], stops: [] })).rejects.toThrow("EMPTY_STOPS");
+  });
+});

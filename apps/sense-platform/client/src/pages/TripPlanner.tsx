@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { trpc } from "@/lib/trpc";
 import { ArrowLeft, Check, CircleAlert, MapPinned, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,13 @@ export default function TripPlanner() {
   const recommendations = useMemo(() => recommendTripStops(tripStops, preferences.accessNeeds), [preferences.accessNeeds]);
   const [selected, setSelected] = useState<string[]>(() => recommendations.slice(0, 2).map((stop) => stop.id));
   const selectedStops = recommendations.filter((stop) => selected.includes(stop.id));
+  const tripAssistant = trpc.ai.assistTripPlanning.useMutation();
 
   const reset = () => setSelected(recommendations.slice(0, 2).map((stop) => stop.id));
+  const askAssistant = () => tripAssistant.mutate({
+    accessNeeds: preferences.accessNeeds,
+    stops: recommendations.map(({ id, name, summary, verificationNote }) => ({ id, name, summary, verificationNote })),
+  });
 
   return (
     <PublicShell>
@@ -23,6 +29,15 @@ export default function TripPlanner() {
             <h1 className="mt-5 max-w-3xl text-5xl font-black leading-tight md:text-7xl">خطط رحلتك،<br /><span className="text-[#f5c542]">بطريقتك.</span></h1>
             <p className="mt-6 max-w-2xl text-lg leading-9 text-blue-100/80">نرتب لك بداية أولية اعتمادًا على ملف الوصول المحفوظ على جهازك. القرار لك، والمعلومات تحتاج تحققًا ميدانيًا قبل الاعتماد النهائي.</p>
           </div>
+        </section>
+
+        <section className="container pt-10">
+          <div className="cad-frame bg-white p-6 md:flex md:items-center md:justify-between md:gap-8">
+            <div><div className="eyebrow text-[#1355a3]">AI PLANNING ASSIST</div><h2 className="mt-2 text-2xl font-black text-[#071b42]">مساعد تخطيط أولي</h2><p className="mt-2 max-w-2xl text-sm leading-7 text-[#647b96]">يقارن الاحتياجات المحفوظة بالمحطات المتاحة فقط، ويقترح أسئلة تحقق. لا ينشئ حجزًا ولا يثبت إتاحة غير موثقة.</p></div>
+            <Button onClick={askAssistant} disabled={tripAssistant.isPending} className="mt-5 shrink-0 bg-[#1355a3] text-white hover:bg-[#0e4387] md:mt-0">{tripAssistant.isPending ? "جارٍ التحليل..." : "حلل مساري مبدئيًا"}</Button>
+          </div>
+          {tripAssistant.data && <div className="mt-4 cad-frame border-[#dceafd] bg-[#f2f7fd] p-6 text-[#071b42]"><h3 className="font-black">ملخص المساعد</h3><p className="mt-2 leading-7">{tripAssistant.data.summary}</p><div className="mt-4"><strong>أسئلة تحقق قبل الزيارة</strong><ul className="mt-2 list-disc space-y-1 ps-5 text-sm leading-6">{tripAssistant.data.accessibilityQuestions.map((question) => <li key={question}>{question}</li>)}</ul></div><p className="mt-4 border-t border-[#dceafd] pt-3 text-xs text-[#647b96]">{tripAssistant.data.disclaimer}</p></div>}
+          {tripAssistant.error && <p role="alert" className="mt-3 text-sm text-[#a33a3a]">تعذر تشغيل المساعد؛ يمكنك متابعة اختيار المحطات يدويًا.</p>}
         </section>
 
         <section className="container grid gap-8 py-16 lg:grid-cols-[1fr_.34fr]">
