@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ClipboardCheck, MapPin, RefreshCw, Upload } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, MapPin, RefreshCw, Sparkles, Upload } from "lucide-react";
 import { Link } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
@@ -115,6 +115,11 @@ function EvidencePicker({
 export default function OperationsReports() {
   const queue = trpc.reports.queue.useQuery();
   const [mapCenter, setMapCenter] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [assistantReportId, setAssistantReportId] = useState<number | null>(null);
+  const assistant = trpc.ai.assistOperations.useMutation({
+    onError: error => toast.error(error.message || "تعذر تشغيل مساعد العمليات"),
+  });
+  const assistantReport = queue.data?.find(item => item.id === assistantReportId) ?? null;
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const nearbyInput = useMemo(
@@ -186,6 +191,25 @@ export default function OperationsReports() {
           <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground">قيد المراجعة</p><p className="mt-2 text-3xl font-black">{queue.data?.filter(item => item.status === "submitted" || item.status === "review").length ?? "—"}</p></CardContent></Card>
           <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground">بانتظار الاعتماد</p><p className="mt-2 text-3xl font-black">{queue.data?.filter(item => item.status === "awaiting_approval").length ?? "—"}</p></CardContent></Card>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />مساعد العمليات</CardTitle>
+            <p className="mt-1 text-sm font-normal text-muted-foreground">اقتراح عربي مساعد مبني على بلاغ من طابورك؛ لا يغير الحالة ولا يستبدل تحقق الموظف.</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <label className="flex-1 text-sm font-bold">اختر بلاغًا
+                <select className="mt-2 block h-10 w-full rounded-md border border-input bg-background px-3 text-sm font-normal" value={assistantReportId ?? ""} onChange={event => setAssistantReportId(event.target.value ? Number(event.target.value) : null)}>
+                  <option value="">اختر من الطابور</option>
+                  {queue.data?.map(item => <option key={item.id} value={item.id}>{`#${item.id} · ${item.title}`}</option>)}
+                </select>
+              </label>
+              <Button disabled={!assistantReport || assistant.isPending} onClick={() => assistantReport && assistant.mutate({ title: assistantReport.title, description: assistantReport.description, category: assistantReport.category, status: assistantReport.status })} className="gap-2"><Sparkles className="h-4 w-4" />{assistant.isPending ? "جارٍ التحليل…" : "إنشاء اقتراح"}</Button>
+            </div>
+            {assistant.data && <div className="grid gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 sm:grid-cols-3"><div><p className="text-xs font-bold text-muted-foreground">الملخص</p><p className="mt-1 text-sm">{assistant.data.summary}</p></div><div><p className="text-xs font-bold text-muted-foreground">الخطوة المقترحة</p><p className="mt-1 text-sm">{assistant.data.suggestedNextAction}</p></div><div><p className="text-xs font-bold text-muted-foreground">تنبيه السلامة</p><p className="mt-1 text-sm">{assistant.data.safetyNotes}</p></div><p className="text-xs text-muted-foreground sm:col-span-3">{assistant.data.disclaimer}</p></div>}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

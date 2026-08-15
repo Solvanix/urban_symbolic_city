@@ -1,0 +1,13 @@
+import DashboardLayout from "@/components/DashboardLayout";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ShoppingBag } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+
+const statusLabels: Record<string, string> = { pending_payment: "بانتظار الدفع", paid: "تم الدفع", processing: "قيد التجهيز", shipped: "تم الشحن", delivered: "تم التسليم", cancelled: "ملغى", refunded: "مُسترد", requires_review: "يحتاج مراجعة" };
+function formatDate(value: Date | string | null) { return value ? new Date(value).toLocaleString("ar-SA") : "غير متاح"; }
+
+export default function AdminOrders() {
+  const orders = trpc.commerce.checkout.adminHandoffs.useQuery();
+  return <DashboardLayout><main className="min-h-screen bg-background p-4 sm:p-6" dir="rtl"><div className="mx-auto max-w-6xl space-y-6"><header><p className="text-xs font-bold tracking-[0.2em] text-primary">ADMIN / INTERNAL ORDERS</p><h1 className="mt-2 text-3xl font-black">إدارة طلبات SENSE</h1><p className="mt-2 max-w-3xl text-sm leading-7 text-muted-foreground">هذه الشاشة تعرض الطلبات التي أنشأتها SENSE. حالات الدفع والشحن تُحدّث لاحقًا من خلال موصلات الشركاء الموقعة، ولا تُعرض أي بيانات بطاقة.</p></header>{orders.isLoading && <Card><CardContent className="p-6">جاري تحميل الطلبات...</CardContent></Card>}{orders.isError && <Card className="border-destructive/40"><CardContent className="p-6 text-destructive">تعذر تحميل الطلبات. يلزم حساب مدير.</CardContent></Card>}{orders.data?.length === 0 && <Card><CardContent className="flex flex-col items-center gap-3 p-10 text-center"><ShoppingBag className="h-10 w-10 text-primary" /><p className="font-bold">لا توجد طلبات داخلية</p><p className="text-sm text-muted-foreground">ستظهر هنا الطلبات بعد إتمام Checkout داخل SENSE.</p></CardContent></Card>}{!!orders.data?.length && <div className="grid gap-4">{orders.data.map(({ order, userName, userEmail }) => <Card key={order.id}><CardHeader className="flex flex-row items-start justify-between gap-4"><div><CardTitle>{order.orderNumber}</CardTitle><p className="mt-1 text-sm text-muted-foreground">المستخدم: {userName || userEmail || `#${order.userId}`}</p></div><Badge variant="outline">{statusLabels[order.status] ?? order.status}</Badge></CardHeader><CardContent className="grid gap-3 text-sm sm:grid-cols-3"><div><span className="font-bold">الإجمالي:</span> {((order.totalMinor ?? 0) / 100).toFixed(2)} {order.currency}</div><div><span className="font-bold">الدفع:</span> {order.paymentStatus}</div><div><span className="font-bold">الإنشاء:</span> {formatDate(order.createdAt)}</div></CardContent></Card>)}</div>}</div></main></DashboardLayout>;
+}

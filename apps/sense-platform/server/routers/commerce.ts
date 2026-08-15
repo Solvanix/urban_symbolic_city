@@ -8,19 +8,9 @@
  */
 
 import { z } from "zod";
-import {
-  addCartLines,
-  createCart,
-  getCart,
-  getCollectionByHandle,
-  getProductByHandle,
-  listCollections,
-  listProducts,
-  removeCartLines,
-  updateCartLines,
-} from "../_core/shopify";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
-import { createCheckoutHandoff, createNotification, getCheckoutHandoffForUser, listCheckoutHandoffsForUser } from "../db";
+import { TRPCError } from "@trpc/server";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { addInternalCartLine, createInternalCart, createInternalOrderFromCart, getInternalCart, getInternalOrderForUser, getPublishedCommerceCatalogItemBySlug, listInternalOrdersForAdmin, listInternalOrdersForUser, listPublishedCommerceCatalog, removeInternalCartLine, updateInternalCartLine } from "../db";
 
 const cartLineInputSchema = z.object({
   variantId: z.string().min(1),
@@ -32,6 +22,23 @@ const cartLineUpdateSchema = z.object({
   /** 0 means "remove this line" — the route forwards to removeLines. */
   quantity: z.number().int().min(0).max(99),
 });
+
+function toInternalStorefrontProduct(item: Awaited<ReturnType<typeof getPublishedCommerceCatalogItemBySlug>>) {
+  if (!item) return null;
+  const price = (item.priceMinor / 100).toFixed(2);
+  const variantId = `sense-variant:${item.id}`;
+  return {
+    id: `sense-product:${item.id}`,
+    handle: item.slug,
+    title: item.name,
+    description: item.description ?? "",
+    productType: item.sourceType === "service" ? "خدمة" : "منتج",
+    tags: [] as string[],
+    priceRange: { min: { amount: price, currencyCode: item.currency }, max: { amount: price, currencyCode: item.currency } },
+    variants: [{ id: variantId, availableForSale: item.inventoryQuantity === null || item.inventoryQuantity > 0, price: { amount: price, currencyCode: item.currency } }],
+    images: item.imageUrl ? [{ url: item.imageUrl, altText: item.name }] : [],
+  };
+}
 
 export const commerceRouter = router({
   products: router({
@@ -45,51 +52,56 @@ export const commerceRouter = router({
           .optional()
       )
       .query(async ({ input }) => {
-        return listProducts(input ?? {});
+        const items = await listPublishedCommerceCatalog({ limit: input?.first });
+        return items.map((item) => toInternalStorefrontProduct(item)).filter((product): product is NonNullable<typeof product> => product !== null);
       }),
     byHandle: publicProcedure
       .input(z.object({ handle: z.string().min(1) }))
       .query(async ({ input }) => {
-        return getProductByHandle(input.handle);
+        const internal = toInternalStorefrontProduct(await getPublishedCommerceCatalogItemBySlug(input.handle));
+        return internal;
       }),
   }),
   collections: router({
     list: publicProcedure
       .input(z.object({ first: z.number().int().min(1).max(50).optional() }).optional())
       .query(async ({ input }) => {
-        return listCollections(input?.first);
+        return [];
       }),
     byHandle: publicProcedure
       .input(z.object({ handle: z.string().min(1) }))
       .query(async ({ input }) => {
-        return getCollectionByHandle(input.handle);
+        return null;
       }),
   }),
   checkout: router({
-    recordHandoff: protectedProcedure
-      .input(z.object({ checkoutId: z.string().min(1).max(255), checkoutUrl: z.string().url().max(2000) }))
+    createOrder: protectedProcedure
+      .input(z.object({ cartId: z.string().startsWith("sense-cart:"), shippingName: z.string().trim().min(2).max(180), shippingPhone: z.string().trim().min(7).max(40), shippingAddress: z.string().trim().min(8).max(1000) }))
       .mutation(async ({ ctx, input }) => {
-        const handoff = await createCheckoutHandoff({ userId: ctx.user.id, checkoutId: input.checkoutId, checkoutUrl: input.checkoutUrl, status: "handed_off" });
-        if (handoff) {
-          await createNotification({ userId: ctx.user.id, kind: "order", title: "تم تحويل السلة إلى المتجر", body: "تم فتح Checkout الخارجي. حالة الطلب النهائية تُدار في المتجر الخارجي ولا تُعرض هنا قبل توفر تكامل موثوق.", href: input.checkoutUrl, sourceType: "checkout", sourceId: handoff.id });
-        }
-        return handoff;
+        const order = await createInternalOrderFromCart({ ...input, userId: ctx.user.id });
+        if (!order) throw new TRPCError({ code: "BAD_REQUEST", message: "السلة فارغة أو لم تعد متاحة." });
+        return order;
       }),
-    mine: protectedProcedure.query(({ ctx }) => listCheckoutHandoffsForUser(ctx.user.id)),
+    mine: protectedProcedure.query(({ ctx }) => listInternalOrdersForUser(ctx.user.id)),
     byId: protectedProcedure
       .input(z.object({ id: z.number().int().positive() }))
-      .query(async ({ ctx, input }) => getCheckoutHandoffForUser(ctx.user.id, input.id)),
+      .query(async ({ ctx, input }) => getInternalOrderForUser(ctx.user.id, input.id)),
+    adminHandoffs: adminProcedure.query(() => listInternalOrdersForAdmin()),
   }),
   cart: router({
     create: publicProcedure
       .input(z.object({ lines: z.array(cartLineInputSchema).min(1).max(50) }))
       .mutation(async ({ input }) => {
-        return createCart(input.lines);
+        const [first, ...rest] = input.lines;
+        let cart = await createInternalCart(first.variantId, first.quantity);
+        for (const line of rest) cart = cart ? await addInternalCartLine(cart.id, line.variantId, line.quantity) : null;
+        if (!cart) throw new TRPCError({ code: "BAD_REQUEST", message: "تعذر إنشاء السلة من الكتالوج الداخلي." });
+        return cart;
       }),
     get: publicProcedure
       .input(z.object({ cartId: z.string().min(1) }))
       .query(async ({ input }) => {
-        return getCart(input.cartId);
+        return getInternalCart(input.cartId);
       }),
     addLines: publicProcedure
       .input(
@@ -99,7 +111,10 @@ export const commerceRouter = router({
         })
       )
       .mutation(async ({ input }) => {
-        return addCartLines(input.cartId, input.lines);
+        let cart = await getInternalCart(input.cartId);
+        for (const line of input.lines) cart = cart ? await addInternalCartLine(input.cartId, line.variantId, line.quantity) : null;
+        if (!cart) throw new TRPCError({ code: "BAD_REQUEST", message: "السلة أو المنتج غير متاح." });
+        return cart;
       }),
     updateLines: publicProcedure
       .input(
@@ -114,14 +129,10 @@ export const commerceRouter = router({
         const toRemove = input.lines.filter(l => l.quantity === 0).map(l => l.lineId);
         const toUpdate = input.lines.filter(l => l.quantity > 0);
 
-        let cart = null;
-        if (toUpdate.length) {
-          cart = await updateCartLines(input.cartId, toUpdate);
-        }
-        if (toRemove.length) {
-          cart = await removeCartLines(input.cartId, toRemove);
-        }
-        if (!cart) cart = await getCart(input.cartId);
+        let cart = await getInternalCart(input.cartId);
+        for (const line of toUpdate) cart = cart ? await updateInternalCartLine(input.cartId, line.lineId, line.quantity) : null;
+        for (const lineId of toRemove) cart = cart ? await removeInternalCartLine(input.cartId, lineId) : null;
+        if (!cart) throw new TRPCError({ code: "BAD_REQUEST", message: "تعذر تحديث السلة الداخلية." });
         return cart;
       }),
     removeLines: publicProcedure
@@ -132,7 +143,10 @@ export const commerceRouter = router({
         })
       )
       .mutation(async ({ input }) => {
-        return removeCartLines(input.cartId, input.lineIds);
+        let cart = await getInternalCart(input.cartId);
+        for (const lineId of input.lineIds) cart = cart ? await removeInternalCartLine(input.cartId, lineId) : null;
+        if (!cart) throw new TRPCError({ code: "BAD_REQUEST", message: "تعذر حذف عناصر السلة الداخلية." });
+        return cart;
       }),
   }),
 });

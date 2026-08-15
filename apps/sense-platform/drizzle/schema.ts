@@ -183,3 +183,95 @@ export type ProviderService = typeof providerServices.$inferSelect;
 export type InsertProviderService = typeof providerServices.$inferInsert;
 export type ProviderAuditEvent = typeof providerAuditEvents.$inferSelect;
 export type InsertProviderAuditEvent = typeof providerAuditEvents.$inferInsert;
+
+/** Internal SENSE Commerce source of truth. External providers are referenced by opaque IDs only. */
+export const commerceCatalogItems = mysqlTable("commerceCatalogItems", {
+  id: int("id").autoincrement().primaryKey(),
+  providerId: int("providerId"),
+  sourceType: mysqlEnum("sourceType", ["product", "service"]).notNull(),
+  sourceId: int("sourceId"),
+  name: varchar("name", { length: 180 }).notNull(),
+  slug: varchar("slug", { length: 220 }).notNull().unique(),
+  description: text("description"),
+  priceMinor: int("priceMinor").notNull(),
+  currency: varchar("currency", { length: 3 }).default("SAR").notNull(),
+  inventoryQuantity: int("inventoryQuantity"),
+  imageUrl: text("imageUrl"),
+  status: mysqlEnum("status", ["draft", "published", "paused", "archived"]).default("draft").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const commerceCarts = mysqlTable("commerceCarts", {
+  id: varchar("id", { length: 80 }).primaryKey(),
+  userId: int("userId"),
+  status: mysqlEnum("status", ["active", "converted", "abandoned"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const commerceCartItems = mysqlTable("commerceCartItems", {
+  id: int("id").autoincrement().primaryKey(),
+  cartId: varchar("cartId", { length: 80 }).notNull(),
+  catalogItemId: int("catalogItemId").notNull(),
+  quantity: int("quantity").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const commerceOrders = mysqlTable("commerceOrders", {
+  id: int("id").autoincrement().primaryKey(),
+  orderNumber: varchar("orderNumber", { length: 40 }).notNull().unique(),
+  userId: int("userId").notNull(),
+  status: mysqlEnum("status", ["pending_payment", "paid", "processing", "shipped", "delivered", "cancelled", "refunded", "requires_review"]).default("pending_payment").notNull(),
+  paymentStatus: mysqlEnum("paymentStatus", ["pending", "authorized", "paid", "failed", "refunded"]).default("pending").notNull(),
+  fulfillmentStatus: mysqlEnum("fulfillmentStatus", ["unfulfilled", "partial", "fulfilled", "cancelled"]).default("unfulfilled").notNull(),
+  currency: varchar("currency", { length: 3 }).default("SAR").notNull(),
+  subtotalMinor: int("subtotalMinor").notNull(),
+  shippingMinor: int("shippingMinor").default(0).notNull(),
+  totalMinor: int("totalMinor").notNull(),
+  shippingName: varchar("shippingName", { length: 180 }),
+  shippingPhone: varchar("shippingPhone", { length: 40 }),
+  shippingAddress: text("shippingAddress"),
+  externalPaymentReference: varchar("externalPaymentReference", { length: 255 }),
+  externalShipmentReference: varchar("externalShipmentReference", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const commerceOrderItems = mysqlTable("commerceOrderItems", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("orderId").notNull(),
+  catalogItemId: int("catalogItemId").notNull(),
+  providerId: int("providerId"),
+  nameSnapshot: varchar("nameSnapshot", { length: 180 }).notNull(),
+  unitPriceMinor: int("unitPriceMinor").notNull(),
+  quantity: int("quantity").notNull(),
+  totalMinor: int("totalMinor").notNull(),
+});
+
+export const commerceIntegrationEvents = mysqlTable("commerceIntegrationEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("orderId"),
+  provider: mysqlEnum("provider", ["payment", "logistics", "store_sync", "software_partner"]).notNull(),
+  eventType: varchar("eventType", { length: 100 }).notNull(),
+  externalEventId: varchar("externalEventId", { length: 255 }).notNull().unique(),
+  payloadHash: varchar("payloadHash", { length: 128 }).notNull(),
+  status: mysqlEnum("status", ["received", "processed", "failed", "ignored"]).default("received").notNull(),
+  attemptCount: int("attemptCount").default(0).notNull(),
+  receivedAt: timestamp("receivedAt").defaultNow().notNull(),
+  processedAt: timestamp("processedAt"),
+});
+
+export type CommerceCatalogItem = typeof commerceCatalogItems.$inferSelect;
+export type InsertCommerceCatalogItem = typeof commerceCatalogItems.$inferInsert;
+export type CommerceCart = typeof commerceCarts.$inferSelect;
+export type InsertCommerceCart = typeof commerceCarts.$inferInsert;
+export type CommerceCartItem = typeof commerceCartItems.$inferSelect;
+export type InsertCommerceCartItem = typeof commerceCartItems.$inferInsert;
+export type CommerceOrder = typeof commerceOrders.$inferSelect;
+export type InsertCommerceOrder = typeof commerceOrders.$inferInsert;
+export type CommerceOrderItem = typeof commerceOrderItems.$inferSelect;
+export type InsertCommerceOrderItem = typeof commerceOrderItems.$inferInsert;
+export type CommerceIntegrationEvent = typeof commerceIntegrationEvents.$inferSelect;
+export type InsertCommerceIntegrationEvent = typeof commerceIntegrationEvents.$inferInsert;

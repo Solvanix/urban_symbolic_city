@@ -21,6 +21,7 @@ export default function PublicShell({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-[#f5f8fc] text-[#071b42]" dir="rtl">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:right-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-[#f5c542] focus:px-4 focus:py-3 focus:font-bold focus:text-[#071b42]">تجاوز إلى المحتوى الرئيسي</a>
       <div className="bg-[#071b42] px-4 py-2 text-center text-xs font-semibold text-white/80">
         منصة SENSE — مدينتك أقرب، وخدماتك أوضح
       </div>
@@ -35,7 +36,7 @@ export default function PublicShell({ children }: { children: React.ReactNode })
           </Link>
           <nav className="hidden items-center gap-7 lg:flex" aria-label="التنقل الرئيسي">
             {navItems.map(item => (
-              <Link key={item.href} href={item.href} className={`focus-ring text-sm font-bold transition-colors hover:text-[#1355a3] ${location === item.href ? "text-[#1355a3]" : "text-[#456283]"}`}>
+              <Link key={item.href} href={item.href} aria-current={location === item.href ? "page" : undefined} className={`focus-ring text-sm font-bold transition-colors hover:text-[#1355a3] ${location === item.href ? "text-[#1355a3]" : "text-[#456283]"}`}>
                 {item.label}
               </Link>
             ))}
@@ -47,10 +48,12 @@ export default function PublicShell({ children }: { children: React.ReactNode })
           </div>
           <button className="focus-ring grid h-10 w-10 place-items-center lg:hidden" onClick={() => setOpen(v => !v)} aria-label={open ? "إغلاق القائمة" : "فتح القائمة"}>{open ? <X /> : <Menu />}</button>
         </div>
-        {open && <div className="border-t border-[#d8e3f2] bg-white px-4 py-5 lg:hidden"><nav className="container flex flex-col gap-4">{navItems.map(item => <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className="border-b border-[#e6edf6] pb-3 font-bold text-[#183a67]">{item.label}</Link>)}<Button onClick={() => startLogin()} className="mt-2 bg-[#1355a3] text-white">دخول المنصة</Button></nav></div>}
+        {open && <div className="border-t border-[#d8e3f2] bg-white px-4 py-5 lg:hidden"><nav className="container flex flex-col gap-4" aria-label="التنقل الرئيسي للجوال">{navItems.map(item => <Link key={item.href} href={item.href} aria-current={location === item.href ? "page" : undefined} onClick={() => setOpen(false)} className="border-b border-[#e6edf6] pb-3 font-bold text-[#183a67]">{item.label}</Link>)}<Button onClick={() => startLogin()} className="mt-2 bg-[#1355a3] text-white">دخول المنصة</Button></nav></div>}
       </header>
       <div className="container py-3"><AccessibilityToolbar /></div>
-      {children}
+      <main id="main-content" tabIndex={-1}>
+        {children}
+      </main>
       <footer className="sense-grid mt-20 text-white">
         <div className="container grid gap-10 py-14 md:grid-cols-[1.2fr_.8fr_.8fr]">
           <div><div className="mb-4 text-2xl font-black tracking-[.2em] text-[#f5c542]">SENSE</div><p className="max-w-sm leading-8 text-white/70">منصة حضرية تجمع البلاغات، الخدمات، السوق المحلي، والذكاء الاصطناعي في تجربة واحدة أكثر وضوحًا.</p></div>

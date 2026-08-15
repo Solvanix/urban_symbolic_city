@@ -17,7 +17,7 @@ import {
  * - Persists the cart id in localStorage and rehydrates on mount.
  * - Exposes a tiny imperative surface to UI: addItem, updateQuantity,
  *   removeItem, openCart, proceedToCheckout. Everything is typed against
- *   `shared/commerce/types` — the Shopify backend is invisible.
+ *   `shared/commerce/types` — the internal SENSE commerce backend is invisible.
  */
 
 const CART_STORAGE_KEY = "commerce:cart-id";
@@ -162,14 +162,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const proceedToCheckout = useCallback(async () => {
     if (!cart?.checkoutUrl) return;
-    try {
-      await utils.client.commerce.checkout.recordHandoff.mutate({ checkoutId: cart.id, checkoutUrl: cart.checkoutUrl });
-    } catch {
-      // Guest checkout remains supported; only authenticated users get a handoff history.
-    }
-    // checkoutUrl already has channel=online_store appended server-side.
-    window.open(cart.checkoutUrl, "_blank", "noopener,noreferrer");
-  }, [cart, utils.client]);
+    window.location.assign(cart.checkoutUrl);
+  }, [cart]);
 
   const value = useMemo<CartContextValue>(
     () => ({

@@ -1,6 +1,8 @@
 import { drizzle } from "drizzle-orm/mysql2";
+import { randomUUID } from "node:crypto";
 import { and, desc, eq, inArray, isNull, not, or } from "drizzle-orm";
-import { InsertReport, InsertReportEvent, InsertUser, Report, ReportEvent, reportEvents, reports, users, InsertProvider, Provider, providers, providerMembers, ProviderProduct, InsertProviderProduct, providerProducts, ProviderService, InsertProviderService, providerServices, providerAuditEvents, InsertProviderAuditEvent, ProviderMember, InsertNotification, Notification, notifications, CheckoutHandoff, InsertCheckoutHandoff, checkoutHandoffs, ReportRating, InsertReportRating, reportRatings } from "../drizzle/schema";
+import { InsertReport, InsertReportEvent, InsertUser, Report, ReportEvent, reportEvents, reports, users, InsertProvider, Provider, providers, providerMembers, ProviderProduct, InsertProviderProduct, providerProducts, ProviderService, InsertProviderService, providerServices, providerAuditEvents, InsertProviderAuditEvent, ProviderMember, InsertNotification, Notification, notifications, CheckoutHandoff, InsertCheckoutHandoff, checkoutHandoffs, ReportRating, InsertReportRating, reportRatings, commerceCatalogItems, CommerceCatalogItem, commerceCarts, commerceCartItems, commerceOrders, commerceOrderItems } from "../drizzle/schema";
+import type { Cart } from "../shared/commerce/types";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -398,4 +400,179 @@ export async function getCheckoutHandoffForUser(userId: number, handoffId: numbe
     .where(and(eq(checkoutHandoffs.id, handoffId), eq(checkoutHandoffs.userId, userId)))
     .limit(1);
   return rows[0];
+}
+
+export async function listCheckoutHandoffsForAdmin() {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      id: checkoutHandoffs.id,
+      userId: checkoutHandoffs.userId,
+      userName: users.name,
+      userEmail: users.email,
+      checkoutId: checkoutHandoffs.checkoutId,
+      checkoutUrl: checkoutHandoffs.checkoutUrl,
+      status: checkoutHandoffs.status,
+      createdAt: checkoutHandoffs.createdAt,
+      updatedAt: checkoutHandoffs.updatedAt,
+    })
+    .from(checkoutHandoffs)
+    .leftJoin(users, eq(checkoutHandoffs.userId, users.id))
+    .orderBy(desc(checkoutHandoffs.createdAt))
+    .limit(200);
+}
+
+
+export async function listPublishedCommerceCatalog(input: { limit?: number; providerId?: number } = {}): Promise<CommerceCatalogItem[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const limit = Math.min(Math.max(input.limit ?? 50, 1), 100);
+  const conditions = [eq(commerceCatalogItems.status, "published")];
+  if (input.providerId) conditions.push(eq(commerceCatalogItems.providerId, input.providerId));
+  return db
+    .select()
+    .from(commerceCatalogItems)
+    .where(and(...conditions))
+    .orderBy(desc(commerceCatalogItems.updatedAt))
+    .limit(limit);
+}
+
+export async function getPublishedCommerceCatalogItemBySlug(slug: string): Promise<CommerceCatalogItem | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select()
+    .from(commerceCatalogItems)
+    .where(and(eq(commerceCatalogItems.slug, slug), eq(commerceCatalogItems.status, "published")))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+
+function parseInternalVariantId(variantId: string): number | null {
+  const match = /^sense-variant:(\d+)$/.exec(variantId);
+  return match ? Number(match[1]) : null;
+}
+
+async function buildInternalCart(cartId: string): Promise<Cart | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const cartRows = await db.select().from(commerceCarts).where(eq(commerceCarts.id, cartId)).limit(1);
+  if (!cartRows[0] || cartRows[0].status !== "active") return null;
+  const rows = await db
+    .select({ line: commerceCartItems, item: commerceCatalogItems })
+    .from(commerceCartItems)
+    .innerJoin(commerceCatalogItems, eq(commerceCartItems.catalogItemId, commerceCatalogItems.id))
+    .where(and(eq(commerceCartItems.cartId, cartId), eq(commerceCatalogItems.status, "published")));
+  const items = rows.map(({ line, item }) => {
+    const unit = (item.priceMinor / 100).toFixed(2);
+    const total = ((item.priceMinor * line.quantity) / 100).toFixed(2);
+    return {
+      lineId: `sense-line:${line.id}`,
+      variantId: `sense-variant:${item.id}`,
+      productHandle: item.slug,
+      productTitle: item.name,
+      variantTitle: "الخيار الافتراضي",
+      image: item.imageUrl ? { url: item.imageUrl, altText: item.name } : null,
+      unitPrice: { amount: unit, currencyCode: item.currency },
+      quantity: line.quantity,
+      lineTotal: { amount: total, currencyCode: item.currency },
+    };
+  });
+  const currency = items[0]?.unitPrice.currencyCode ?? "SAR";
+  const subtotalMinor = rows.reduce((sum, { line, item }) => sum + item.priceMinor * line.quantity, 0);
+  const subtotal = (subtotalMinor / 100).toFixed(2);
+  return { id: cartId, checkoutUrl: `/checkout/${encodeURIComponent(cartId)}`, items, itemCount: items.reduce((sum, item) => sum + item.quantity, 0), subtotal: { amount: subtotal, currencyCode: currency }, total: { amount: subtotal, currencyCode: currency } };
+}
+
+export async function createInternalCart(variantId: string, quantity: number): Promise<Cart | null> {
+  const catalogItemId = parseInternalVariantId(variantId);
+  if (!catalogItemId) return null;
+  const db = await getDb();
+  if (!db) return null;
+  const item = await db.select().from(commerceCatalogItems).where(and(eq(commerceCatalogItems.id, catalogItemId), eq(commerceCatalogItems.status, "published"))).limit(1);
+  if (!item[0] || (item[0].inventoryQuantity !== null && item[0].inventoryQuantity < quantity)) return null;
+  const cartId = `sense-cart:${randomUUID()}`;
+  await db.insert(commerceCarts).values({ id: cartId, status: "active" });
+  await db.insert(commerceCartItems).values({ cartId, catalogItemId, quantity });
+  return buildInternalCart(cartId);
+}
+
+export async function getInternalCart(cartId: string): Promise<Cart | null> {
+  return buildInternalCart(cartId);
+}
+
+export async function addInternalCartLine(cartId: string, variantId: string, quantity: number): Promise<Cart | null> {
+  const catalogItemId = parseInternalVariantId(variantId);
+  if (!catalogItemId) return null;
+  const db = await getDb();
+  if (!db) return null;
+  const item = await db.select().from(commerceCatalogItems).where(and(eq(commerceCatalogItems.id, catalogItemId), eq(commerceCatalogItems.status, "published"))).limit(1);
+  if (!item[0]) return null;
+  const existing = await db.select().from(commerceCartItems).where(and(eq(commerceCartItems.cartId, cartId), eq(commerceCartItems.catalogItemId, catalogItemId))).limit(1);
+  const nextQuantity = (existing[0]?.quantity ?? 0) + quantity;
+  if (item[0].inventoryQuantity !== null && item[0].inventoryQuantity < nextQuantity) return null;
+  if (existing[0]) await db.update(commerceCartItems).set({ quantity: nextQuantity }).where(eq(commerceCartItems.id, existing[0].id));
+  else await db.insert(commerceCartItems).values({ cartId, catalogItemId, quantity });
+  return buildInternalCart(cartId);
+}
+
+export async function updateInternalCartLine(cartId: string, lineId: string, quantity: number): Promise<Cart | null> {
+  const match = /^sense-line:(\d+)$/.exec(lineId);
+  const lineDbId = match ? Number(match[1]) : null;
+  const db = await getDb();
+  if (!db || !lineDbId) return null;
+  if (quantity === 0) await db.delete(commerceCartItems).where(and(eq(commerceCartItems.id, lineDbId), eq(commerceCartItems.cartId, cartId)));
+  else await db.update(commerceCartItems).set({ quantity }).where(and(eq(commerceCartItems.id, lineDbId), eq(commerceCartItems.cartId, cartId)));
+  return buildInternalCart(cartId);
+}
+
+export async function removeInternalCartLine(cartId: string, lineId: string): Promise<Cart | null> {
+  return updateInternalCartLine(cartId, lineId, 0);
+}
+
+
+export async function createInternalOrderFromCart(input: { cartId: string; userId: number; shippingName: string; shippingPhone: string; shippingAddress: string }) {
+  const db = await getDb();
+  if (!db) return null;
+  return db.transaction(async (tx) => {
+    const cartRows = await tx.select().from(commerceCarts).where(and(eq(commerceCarts.id, input.cartId), eq(commerceCarts.status, "active"))).limit(1);
+    if (!cartRows[0]) return null;
+    const rows = await tx
+      .select({ line: commerceCartItems, item: commerceCatalogItems })
+      .from(commerceCartItems)
+      .innerJoin(commerceCatalogItems, eq(commerceCartItems.catalogItemId, commerceCatalogItems.id))
+      .where(and(eq(commerceCartItems.cartId, input.cartId), eq(commerceCatalogItems.status, "published")));
+    if (!rows.length) return null;
+    const currency = rows[0].item.currency;
+    const subtotalMinor = rows.reduce((sum, row) => sum + row.item.priceMinor * row.line.quantity, 0);
+    const orderNumber = `SENSE-${Date.now()}-${randomUUID().slice(0, 8).toUpperCase()}`;
+    const [order] = await tx.insert(commerceOrders).values({ orderNumber, userId: input.userId, status: "pending_payment", paymentStatus: "pending", fulfillmentStatus: "unfulfilled", currency, subtotalMinor, shippingMinor: 0, totalMinor: subtotalMinor, shippingName: input.shippingName, shippingPhone: input.shippingPhone, shippingAddress: input.shippingAddress }).$returningId();
+    for (const row of rows) {
+      await tx.insert(commerceOrderItems).values({ orderId: order.id, catalogItemId: row.item.id, providerId: row.item.providerId, nameSnapshot: row.item.name, unitPriceMinor: row.item.priceMinor, quantity: row.line.quantity, totalMinor: row.item.priceMinor * row.line.quantity });
+    }
+    await tx.update(commerceCarts).set({ status: "converted" }).where(eq(commerceCarts.id, input.cartId));
+    return { id: order.id, orderNumber };
+  });
+}
+
+
+export async function listInternalOrdersForUser(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(commerceOrders).where(eq(commerceOrders.userId, userId)).orderBy(desc(commerceOrders.createdAt));
+}
+
+export async function getInternalOrderForUser(userId: number, id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(commerceOrders).where(and(eq(commerceOrders.userId, userId), eq(commerceOrders.id, id))).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function listInternalOrdersForAdmin() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({ order: commerceOrders, userName: users.name, userEmail: users.email }).from(commerceOrders).leftJoin(users, eq(commerceOrders.userId, users.id)).orderBy(desc(commerceOrders.createdAt)).limit(200);
 }

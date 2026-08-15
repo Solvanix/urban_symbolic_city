@@ -43,6 +43,20 @@
       "when": 1786750343668,
       "tag": "0005_easy_magus",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1786755592252,
+      "tag": "0006_bumpy_mongu",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1786755890630,
+      "tag": "0007_smiling_ego",
+      "breakpoints": true
     }
   ]
 }

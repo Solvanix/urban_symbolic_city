@@ -4,6 +4,7 @@ import NotFound from "@/pages/NotFound";
 import PublicDirectory from "@/pages/PublicDirectory";
 import LocalMarket from "@/pages/LocalMarket";
 import Store from "@/pages/Store";
+import InternalCheckout from "@/pages/InternalCheckout";
 import ProductDetail from "@/pages/ProductDetail";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -16,6 +17,7 @@ import Reports from "./pages/Reports";
 import OperationsReports from "./pages/OperationsReports";
 import ProviderAdmin from "./pages/ProviderAdmin";
 import AdminProviders from "./pages/AdminProviders";
+import AdminOrders from "./pages/AdminOrders";
 import Notifications from "./pages/Notifications";
 import RoleDashboard from "./pages/RoleDashboard";
 import ProviderDetail from "./pages/ProviderDetail";
@@ -36,6 +38,7 @@ function Router() {
       <Route path="/ops/reports" component={OperationsReports} />
       <Route path="/provider-admin" component={ProviderAdmin} />
       <Route path="/admin/providers" component={AdminProviders} />
+      <Route path="/admin/orders" component={AdminOrders} />
       <Route path="/notifications" component={Notifications} />
       <Route path="/dashboard" component={RoleDashboard} />
       <Route path="/ai-assistant" component={ReportAssistant} />
@@ -54,6 +57,7 @@ function Router() {
       <Route path="/market" component={LocalMarket} />
       <Route path="/store" component={Store} />
       <Route path="/store/:handle" component={ProductDetail} />
+      <Route path="/checkout/:cartId" component={InternalCheckout} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
