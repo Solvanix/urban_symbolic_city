@@ -12,16 +12,28 @@ const currency = new Intl.NumberFormat("ar-SA", { style: "currency", currency: "
 
 export default function Store() {
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
   const { data, isLoading, isError } = trpc.commerce.products.list.useQuery({ first: 24 });
+
+  const filterOptions = useMemo(() => {
+    const values = new Set<string>();
+    for (const product of data ?? []) {
+      if (product.productType) values.add(product.productType);
+      for (const tag of product.tags ?? []) values.add(tag);
+    }
+    return Array.from(values).sort((a, b) => a.localeCompare(b, "ar"));
+  }, [data]);
   const { addItem, itemCount, loading, openCart, closeCart, isOpen, cart, updateQuantity, removeItem, proceedToCheckout } = useCart();
 
   const products = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return data ?? [];
-    return (data ?? []).filter(product =>
-      `${product.title} ${product.description} ${product.productType ?? ""}`.toLowerCase().includes(query)
-    );
-  }, [data, search]);
+    return (data ?? []).filter(product => {
+      const searchable = `${product.title} ${product.description} ${product.productType ?? ""} ${(product.tags ?? []).join(" ")}`.toLowerCase();
+      const matchesSearch = !query || searchable.includes(query);
+      const matchesFilter = filter === "all" || product.productType === filter || (product.tags ?? []).includes(filter);
+      return matchesSearch && matchesFilter;
+    });
+  }, [data, filter, search]);
 
   return (
     <PublicShell>
@@ -50,9 +62,13 @@ export default function Store() {
               <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#1f67ac]">CURATED FOR YOUR JOURNEY</p>
               <h2 className="mt-2 text-3xl font-black md:text-4xl">اختيارات مبنية على احتياجك</h2>
             </div>
-            <div className="flex w-full max-w-md gap-2">
-              <Input value={search} onChange={event => setSearch(event.target.value)} placeholder="ابحث عن منتج أو فئة" className="bg-white" />
-              <Button variant="outline" onClick={() => setSearch("")}>مسح</Button>
+            <div className="flex w-full max-w-xl flex-col gap-3 md:flex-row">
+              <Input value={search} onChange={event => setSearch(event.target.value)} placeholder="ابحث عن منتج أو فئة" className="bg-white" aria-label="البحث في المنتجات" />
+              <select value={filter} onChange={event => setFilter(event.target.value)} className="h-10 border border-[#c7d7ea] bg-white px-3 text-sm" aria-label="تصفية المنتجات حسب الاستخدام أو الفئة">
+                <option value="all">كل الاستخدامات والفئات</option>
+                {filterOptions.map(option => <option key={option} value={option}>{option}</option>)}
+              </select>
+              <Button variant="outline" onClick={() => { setSearch(""); setFilter("all"); }}>مسح</Button>
             </div>
           </div>
 
